@@ -4,7 +4,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const authButton = document.getElementById("authButton");
     const userGreeting = document.getElementById("userGreeting");
 
-    // 로컬 스토리지에서 로그인 정보 확인
     const loggedInUser = localStorage.getItem("loggedInUser");
 
     if (loggedInUser) {
@@ -14,28 +13,24 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
         authButton.textContent = "로그인";
         authButton.className = "login-btn";
-        userGreeting.textContent = ""; // 로그인 안 되어 있으면 표시 X
+        userGreeting.textContent = "";
     }
 
-    loadRooms(); // 페이지 로드 시 방 목록 불러오기
+    loadRooms();
 });
 
-// 로그인 / 로그아웃 기능
 function handleAuth() {
     const loggedInUser = localStorage.getItem("loggedInUser");
 
     if (loggedInUser) {
-        // 로그아웃 처리
         localStorage.removeItem("loggedInUser");
         alert("로그아웃되었습니다.");
-        location.reload(); // 페이지 새로고침
+        location.reload();
     } else {
-        // 로그인 페이지로 이동
         window.location.href = "login.html";
     }
 }
 
-// 방 참여 기능
 function joinRoom() {
     const roomCode = document.getElementById("room-code").value;
     if (!roomCode) {
@@ -45,7 +40,6 @@ function joinRoom() {
     alert(`방 ${roomCode}에 참여합니다!`);
 }
 
-// 방 목록 불러오기
 function loadRooms() {
     fetch(`${API_URL}/rooms/list`)
         .then(response => response.json())

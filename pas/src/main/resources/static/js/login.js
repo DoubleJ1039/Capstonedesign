@@ -1,6 +1,5 @@
 const API_URL = "/api/auth";
 
-// 로그인 함수
 function login() {
     const email = document.getElementById("login-email").value;
     const password = document.getElementById("login-password").value;
@@ -19,8 +18,8 @@ function login() {
     .then(data => {
         if (data.success) {
             alert("로그인 성공!");
-            localStorage.setItem("loggedInUser", email); // 로그인 정보 저장
-            window.location.href = "index.html"; // 로그인 후 메인 페이지로 이동
+            localStorage.setItem("loggedInUser", email);
+            window.location.href = "index.html";
         } else {
             alert("로그인 실패: " + data.message);
         }
@@ -28,7 +27,6 @@ function login() {
     .catch(error => console.error("로그인 오류:", error));
 }
 
-// 회원가입 함수
 function register() {
     const email = document.getElementById("register-email").value;
     const password = document.getElementById("register-password").value;
@@ -60,12 +58,11 @@ function register() {
     .catch(error => console.error("회원가입 오류:", error));
 }
 
-// 카카오 로그인
+
 function kakaoLogin() {
     window.location.href = "/api/auth/kakao/login";
 }
 
-// 회원가입 / 로그인 화면 전환
 function toggleRegister() {
     const loginContainer = document.querySelector(".login-container");
     const registerContainer = document.querySelector(".register-container");
@@ -79,7 +76,6 @@ function toggleRegister() {
     }
 }
 
-// 페이지 로드 시 로그인 상태 확인 및 UI 업데이트
 document.addEventListener("DOMContentLoaded", () => {
     const authButton = document.getElementById("authButton");
     const userGreeting = document.getElementById("userGreeting");
