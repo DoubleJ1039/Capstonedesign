@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>방 참여</title>
+    <link rel="stylesheet" href="css/room.css">
+</head>
+<body>
+    <header>
+        <h1 id="room-title">방 정보 로딩 중...</h1>
+        <button onclick="leaveRoom()" class="leave-btn">방 나가기</button>
+    </header>
+
+    <section id="nickname-section" style="display:none;">
+        <h2>닉네임 설정</h2>
+        <input type="text" id="nickname-input" placeholder="닉네임 입력">
+        <button onclick="setNickname()">확인</button>
+    </section>
+
+    <section id="room-info" style="display:none;">
+        <h2>참여자 목록 (<span id="participant-count">0명</span>)</h2>
+        <ul id="participant-list"></ul>
+    </section>
+
+    <section id="chat" style="display:none;">
+        <h2>채팅</h2>
+        <div id="chat-box"></div>
+        <input type="text" id="chat-message" placeholder="메시지 입력">
+        <button onclick="sendMessage()">전송</button>
+    </section>
+
+    <script src="js/room.js"></script>
+</body>
+</html>

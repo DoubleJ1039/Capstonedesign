@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>방 운영 관리</title>
+    <link rel="stylesheet" href="css/roomop.css">
+</head>
+<body>
+    <header>
+        <h1>방 운영 관리</h1>
+        <p id="userGreeting"></p>
+        <button id="logoutButton" onclick="handleLogout()">로그아웃</button>
+    </header>
+
+    <main>
+        <!-- 방 생성 -->
+        <section id="create-room-section">
+            <h2>방 생성</h2>
+            <input type="text" id="room-name" placeholder="방 이름">
+            <input type="password" id="room-password" placeholder="방 비밀번호">
+            <button onclick="createRoom()">방 생성</button>
+        </section>
+
+        <!-- 방 목록 (삭제 및 편집) -->
+        <section id="manage-rooms">
+            <h2>방 관리</h2>
+            <ul id="rooms-list"></ul>
+        </section>
+
+        <!-- 문제 추가 및 편집 -->
+        <section id="edit-questions">
+            <select id="room-select">
+            </select>
+        </section>
+    </main>
+
+    <script src="js/roomop.js"></script>
+</body>
+</html>
