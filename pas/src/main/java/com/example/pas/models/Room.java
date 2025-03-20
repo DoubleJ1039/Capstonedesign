@@ -2,6 +2,7 @@ package com.example.pas.models;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.util.List;
 import java.util.Map;
 
@@ -12,9 +13,10 @@ public class Room {
     private String name; // 방 이름
     private String code; // 고유 코드 (ABCD)
     private String password; // 방 입장 비밀번호
-    private String professorEmail; // 방장(교수) 이메일
+    private String professorEmail; // 방장 이메일
     private Map<String, String> participants; // (email -> nickname) 형태로 저장
-    private List<String> questions; // 익명 질문 리스트
+    private List<String> anonymousQuestions; // 익명 질문 리스트
+    private List<que> testQuestions; // 🟢 시험 문제 리스트 (Que 사용)
 
     public Room() {
     }
@@ -60,11 +62,25 @@ public class Room {
         }
     }
 
-    public List<String> getQuestions() {
-        return questions;
+    public List<String> getAnonymousQuestions() {
+        return anonymousQuestions;
     }
 
-    public void setQuestions(List<String> questions) {
-        this.questions = questions;
+    public void setAnonymousQuestions(List<String> anonymousQuestions) {
+        this.anonymousQuestions = anonymousQuestions;
+    }
+
+    public List<que> getTestQuestions() {
+        return testQuestions;
+    }
+
+    public void setTestQuestions(List<que> testQuestions) {
+        this.testQuestions = testQuestions;
+    }
+
+    public void addTestQuestion(que question) {
+        if (this.testQuestions != null) {
+            this.testQuestions.add(question);
+        }
     }
 }
