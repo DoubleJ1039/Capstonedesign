@@ -5,11 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>방 참여</title>
     <link rel="stylesheet" href="css/room.css">
+    <style>
+        .board-btn, .question-btn {
+            padding: 8px 16px;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .board-btn {
+            background-color: #28a745;
+        }
+        .board-btn:hover {
+            background-color: #218838;
+        }
+        .question-btn {
+            background-color: #17a2b8;
+        }
+        .question-btn:hover {
+            background-color: #138496;
+        }
+        .solve-btn {
+            background-color: #ffc107;
+        }
+        .solve-btn:hover {
+            background-color: #e0a800;
+        }
+    </style>
 </head>
 <body>
     <header>
         <h1 id="room-title">방 정보 로딩 중...</h1>
-        <button onclick="leaveRoom()" class="leave-btn">방 나가기</button>
+        <div>
+            <button onclick="openBoard()" class="board-btn">질의게시판</button>
+            <button onclick="openQuestions()" class="question-btn">문제 관리</button>
+            <button onclick="openSolve()" class="solve-btn">문제 풀기</button>
+            <button onclick="leaveRoom()" class="leave-btn">방 나가기</button>
+        </div>
     </header>
 
     <section id="nickname-section" style="display:none;">
@@ -31,5 +64,22 @@
     </section>
 
     <script src="js/room.js"></script>
+    <script>
+        function openBoard() {
+            const code = new URLSearchParams(window.location.search).get('code');
+            window.open(`board.html?code=${code}`, '_blank');
+        }
+
+        function openQuestions() {
+            const code = new URLSearchParams(window.location.search).get('code');
+            window.open(`questions.html?code=${code}`, '_blank');
+        }
+
+        function openSolve() {
+            const code = new URLSearchParams(window.location.search).get('code');
+            const userId = localStorage.getItem('userId'); // 로그인된 사용자 ID
+            window.open(`solve.html?code=${code}&userId=${userId}`, '_blank');
+        }
+    </script>
 </body>
 </html>

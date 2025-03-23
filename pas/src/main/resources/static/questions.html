@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>문제 관리</title>
+    <style>
+        /* 전체 페이지 스타일 */
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        /* 문제 카드 스타일 */
+        .question-card {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        /* 점수 표시 스타일 */
+        .score {
+            font-weight: bold;
+            color: #28a745;
+            margin-left: 10px;
+        }
+        /* 답안 제출 수 표시 스타일 */
+        .submission-count {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+        /* 버튼 스타일 */
+        .btn {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .btn.delete {
+            background-color: #dc3545;
+        }
+        .btn.delete:hover {
+            background-color: #c82333;
+        }
+        /* 문제 생성 폼 스타일 */
+        .question-form {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input[type="text"],
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .form-group textarea {
+            height: 100px;
+            resize: vertical;
+        }
+    </style>
+</head>
+<body>
+    <h1>문제 관리</h1>
+    
+    <!-- 문제 생성 폼 -->
+    <div class="question-form">
+        <h2>새 문제 만들기</h2>
+        <div class="form-group">
+            <label for="title">제목</label>
+            <input type="text" id="title" required>
+        </div>
+        <div class="form-group">
+            <label for="content">문제 내용</label>
+            <textarea id="content" required></textarea>
+        </div>
+        <div class="form-group">
+            <label for="answer">정답</label>
+            <input type="text" id="answer" required>
+        </div>
+        <div class="form-group">
+            <label for="score">배점</label>
+            <input type="number" id="score" min="1" value="10" required>
+        </div>
+        <button class="btn" onclick="createQuestion()">문제 생성</button>
+    </div>
+
+    <h2>문제 목록</h2>
+    <div id="questionList">
+        <!-- 문제 목록이 동적으로 추가됨 -->
+    </div>
+
+    <script>
+        // URL에서 방 코드 가져오기
+        const code = new URLSearchParams(window.location.search).get('code');
+        
+        /**
+         * 문제 목록을 서버에서 가져와서 화면에 표시
+         * 각 문제의 제목, 내용, 배점, 정답, 제출 수를 보여줌
+         */
+        async function loadQuestions() {
+            if (!code) {
+                alert('방 코드가 없습니다.');
+                window.close();
+                return;
+            }
+            const response = await fetch(`/api/questions/room/${code}`);
+            const questions = await response.json();
+            const questionList = document.getElementById('questionList');
+            questionList.innerHTML = '';
+            
+            questions.forEach(question => {
+                const div = document.createElement('div');
+                div.className = 'question-card';
+                div.innerHTML = `
+                    <h3>${question.title} <span class="score">${question.score}점</span></h3>
+                    <p>${question.content}</p>
+                    <p><strong>정답:</strong> ${question.answer}</p>
+                    <p class="submission-count">답안 제출 수: ${question.submissions?.length || 0}명</p>
+                    <button class="btn delete" onclick="deleteQuestion('${question.id}')">문제 삭제</button>
+                `;
+                questionList.appendChild(div);
+            });
+        }
+
+        /**
+         * 새로운 문제 생성
+         * 입력된 정보를 서버에 전송하여 새 문제를 생성
+         */
+        async function createQuestion() {
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+            const answer = document.getElementById('answer').value;
+            const score = document.getElementById('score').value;
+
+            if (!title || !content || !answer || !score) {
+                alert('모든 필드를 입력해주세요.');
+                return;
+            }
+
+            const response = await fetch('/api/questions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title,
+                    content,
+                    answer,
+                    score: parseInt(score),
+                    roomCode: code
+                }),
+            });
+
+            if (response.ok) {
+                // 입력 필드 초기화
+                document.getElementById('title').value = '';
+                document.getElementById('content').value = '';
+                document.getElementById('answer').value = '';
+                document.getElementById('score').value = '10';
+                
+                // 문제 목록 새로고침
+                loadQuestions();
+            }
+        }
+
+        /**
+         * 문제 삭제
+         * 선택한 문제를 서버에서 삭제
+         * @param {string} questionId - 삭제할 문제의 ID
+         */
+        async function deleteQuestion(questionId) {
+            if (!confirm('이 문제를 삭제하시겠습니까?')) {
+                return;
+            }
+
+            const response = await fetch(`/api/questions/${questionId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                loadQuestions();
+            }
+        }
+
+        // 페이지 로드 시 문제 목록 불러오기
+        loadQuestions();
+    </script>
+</body>
+</html> 
