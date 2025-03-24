@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>문제 템플릿 생성</title>
+  <link rel="stylesheet" href="css/template.css">
+</head>
+<body>
+  <div class="container">
+    <!-- 왼쪽: 문제 리스트 -->
+    <div class="sidebar">
+      <h3>문제 리스트</h3>
+      <ul id="question-list"></ul>
+      <button onclick="addQuestion()">문제 추가</button>
+    </div>
+
+    <!-- 중앙: 문제 입력 -->
+    <div class="editor">
+      <h3>문제 편집</h3>
+      <select id="question-type" onchange="updateChoices()">
+        <option value="multiple">객관식</option>
+        <option value="ox">O/X</option>
+        <option value="short">단답형</option>
+      </select>
+      <textarea id="question-text" placeholder="문제를 입력하세요..."></textarea>
+      <input type="file" id="image-upload" accept="image/*" onchange="handleImageUpload(event)">
+      <div id="choices-container"></div>
+    </div>
+
+    <!-- 오른쪽: 미리보기 -->
+    <div class="preview">
+      <h3>미리보기</h3>
+      <div id="preview-box" class="template-classic">
+        <p id="preview-text"></p>
+        <img id="preview-image" src="" alt="" style="max-width: 100%; display: none;">
+        <ul id="preview-choices"></ul>
+      </div>
+
+      <!-- 템플릿 선택 -->
+      <div class="template-selector">
+        <h4>템플릿 선택</h4>
+        <div class="template-options">
+          <div class="template-box" onclick="selectTemplate('classic')">Classic</div>
+          <div class="template-box" onclick="selectTemplate('modern')">Modern</div>
+          <div class="template-box" onclick="selectTemplate('fancy')">Fancy</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/template.js"></script>
+</body>
+</html>

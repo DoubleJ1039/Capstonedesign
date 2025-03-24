@@ -9,23 +9,25 @@ import java.util.Map;
 @Document(collection = "rooms")
 public class Room {
     @Id
-    private String id; // 방 고유 ID
-    private String name; // 방 이름
-    private String code; // 고유 코드 (ABCD)
-    private String password; // 방 입장 비밀번호
-    private String professorEmail; // 방장 이메일
-    private Map<String, String> participants; // (email -> nickname) 형태로 저장
-    private List<String> anonymousQuestions; // 익명 질문 리스트
-    private List<que> testQuestions; // 🟢 시험 문제 리스트 (Que 사용)
+    private String id;
+    private String name;
+    private String code;
+    private String password;
+    private String professorEmail;
+    private String imageBase64;
+    private Map<String, String> participants;
+    private List<String> anonymousQuestions;
+    private List<que> testQuestions;
 
     public Room() {
     }
 
-    public Room(String name, String code, String password, String professorEmail) {
+    public Room(String name, String code, String password, String professorEmail, String imageBase64) {
         this.name = name;
         this.code = code;
         this.password = password;
         this.professorEmail = professorEmail;
+        this.imageBase64 = imageBase64;
     }
 
     public String getId() {
@@ -46,6 +48,14 @@ public class Room {
 
     public String getProfessorEmail() {
         return professorEmail;
+    }
+
+    public String getImageBase64() {
+        return imageBase64;
+    }
+
+    public void setImageBase64(String imageBase64) {
+        this.imageBase64 = imageBase64;
     }
 
     public Map<String, String> getParticipants() {

@@ -79,15 +79,20 @@ function loadRooms() {
             const roomsList = document.getElementById("rooms");
             roomsList.innerHTML = "";
 
+            if (data.length === 0) {
+                roomsList.innerHTML = "<li>방이 존재하지 않습니다.</li>";
+                return;
+            }
+
             data.forEach(room => {
                 const li = document.createElement("li");
-                li.innerHTML = `방: ${room.name} (코드: ${room.code})
-                                <button onclick="joinRoomWithCode('${room.code}')">참여</button>`;
+                li.textContent = `방 이름: ${room.name} / 코드: ${room.code}`;
                 roomsList.appendChild(li);
             });
         })
         .catch(error => console.error("방 목록 불러오기 오류:", error));
 }
+
 
 function joinRoomWithCode(code) {
     document.getElementById("room-code").value = code;

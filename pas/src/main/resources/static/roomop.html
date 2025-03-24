@@ -7,11 +7,21 @@
     <link rel="stylesheet" href="css/roomop.css">
 </head>
 <body>
-    <header>
-        <h1>방 운영 관리</h1>
-        <p id="userGreeting"></p>
-        <button id="logoutButton" onclick="handleLogout()">로그아웃</button>
-    </header>
+    <!-- 🔵 네비게이션 바 -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <div class="nav-logo">
+                <a href="index.html">PAS</a>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="roomop.html">방 설정</a></li>
+            </ul>
+        </div>
+        <div class="nav-actions">
+            <span id="userGreeting" style="display: none;"></span>
+            <button id="logoutButton" onclick="handleLogout()">로그아웃</button>
+        </div>
+    </nav>
 
     <main>
         <!-- 방 생성 -->
@@ -22,18 +32,15 @@
             <button onclick="createRoom()">방 생성</button>
         </section>
 
-        <!-- 방 목록 (삭제 및 편집) -->
+        <!-- 방 목록 -->
         <section id="manage-rooms">
-            <h2>방 관리</h2>
-            <ul id="rooms-list"></ul>
-        </section>
-
-        <!-- 문제 추가 및 편집 -->
-        <section id="edit-questions">
-            <select id="room-select">
-            </select>
+            <h2>방 목록</h2>
+            <div id="room-grid" class="room-grid">
+            </div>
         </section>
     </main>
+    
+    <input type="file" id="imageInput" accept="image/*" style="display: none;">
 
     <script src="js/roomop.js"></script>
 </body>
