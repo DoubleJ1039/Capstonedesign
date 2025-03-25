@@ -17,10 +17,8 @@ document.addEventListener("DOMContentLoaded", () => {
         userGreeting.textContent = `안녕하세요 ${loggedInUser} 님`;
     }
 
-    // 화면 로드 후 방 목록 불러오기
     loadRooms(loggedInUser);
 
-    // 🔑 input 요소를 JS에서 가져와 이벤트 걸기
     const imageInput = document.getElementById("imageInput");
     imageInput.addEventListener("change", handleImageChange);
 });
@@ -44,12 +42,10 @@ function handleImageChange(e) {
     const reader = new FileReader();
     reader.onloadend = function () {
         console.log("🟡 FileReader onloadend 발생");
-        // data:image/png;base64,.... 형태이므로 앞부분 제거
         const base64Image = reader.result.split(',')[1];
 
         console.log("🔄 이미지 업로드 시작 (code):", currentImageTargetCode);
 
-        // PUT /updateImage/{code}로 전송
         fetch(`${API_URL}/rooms/updateImage/${currentImageTargetCode}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -60,7 +56,7 @@ function handleImageChange(e) {
             console.log("✅ 서버 응답:", data);
             if (data.success) {
                 alert("이미지가 업로드되었습니다!");
-                loadRooms(localStorage.getItem("loggedInUser")); // 다시 방 목록 업데이트
+                loadRooms(localStorage.getItem("loggedInUser"));
             } else {
                 alert("이미지 업로드 실패: " + data.message);
             }
@@ -155,7 +151,6 @@ function loadRooms(loggedInUser) {
 
                 const imageBtn = document.createElement("button");
                 imageBtn.textContent = "이미지 추가하기";
-                // 이미지 추가
                 imageBtn.onclick = (event) => {
                     event.stopPropagation();
                     console.log("🟢 이미지 추가 버튼 클릭됨");
