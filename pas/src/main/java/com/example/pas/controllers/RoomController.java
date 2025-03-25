@@ -16,7 +16,7 @@ public class RoomController {
         this.roomRepository = roomRepository;
     }
 
-    // 🟢 방 생성
+    // 방 생성
     @PostMapping("/create")
     public Map<String, Object> createRoom(@RequestBody Map<String, String> request) {
         String name = request.get("name");
@@ -34,7 +34,7 @@ public class RoomController {
                 "roomCode", code);
     }
 
-    // 🟢 방 이미지 업데이트 (Base64로, 프론트엔드와 맞춤)
+    // 방 이미지 업데이트
     @PutMapping("/updateImage/{code}")
     public Map<String, Object> updateRoomImage(@PathVariable String code,
             @RequestBody Map<String, String> request) {
@@ -72,7 +72,7 @@ public class RoomController {
         return Map.of("success", true, "message", "이미지가 성공적으로 업로드되었습니다.");
     }
 
-    // 🟡 방 참여
+    // 방 참여
     @PostMapping("/join")
     public Map<String, Object> joinRoom(@RequestBody Map<String, String> request) {
         String code = request.get("code");
@@ -138,7 +138,7 @@ public class RoomController {
         return Map.of("success", true, "message", "방에 참여하였습니다.", "nickname", nickname);
     }
 
-    // 🔴 방 삭제
+    // 방 삭제
     @DeleteMapping("/delete/{code}")
     public Map<String, Object> deleteRoom(@PathVariable String code) {
         Optional<Room> roomOptional = roomRepository.findByCode(code);
@@ -149,13 +149,13 @@ public class RoomController {
         return Map.of("success", false, "message", "방을 찾을 수 없습니다.");
     }
 
-    // 🟢 방 목록 조회
+    // 방 목록 조회
     @GetMapping("/list")
     public List<Room> getRooms() {
         return roomRepository.findAll();
     }
 
-    // 🔍 방 정보 조회
+    // 방 정보 조회
     @GetMapping("/info")
     public Map<String, Object> getRoomInfo(@RequestParam String code) {
         Optional<Room> roomOptional = roomRepository.findByCode(code);
@@ -171,7 +171,7 @@ public class RoomController {
                 "imageBase64", room.getImageBase64());
     }
 
-    // 🟢 방 비밀번호 확인
+    // 방 비밀번호 확인
     @PostMapping("/checkPassword")
     public Map<String, Object> checkRoomPassword(@RequestBody Map<String, String> request) {
         String code = request.get("code");
@@ -194,7 +194,7 @@ public class RoomController {
         return Map.of("success", true, "message", "비밀번호 확인 완료");
     }
 
-    // 🔧 방 코드 생성
+    // 방 코드 생성
     private String generateRoomCode() {
         return UUID.randomUUID().toString().substring(0, 4).toUpperCase();
     }
