@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>방 참여 시스템</title>
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+    <header>
+        <a href="index.html" style="text-decoration: none; color: inherit;">
+            <h1>PAS</h1>
+        </a>
+        <nav>
+            <ul style="list-style: none; display: flex; margin: 0; padding: 0;">
+                <li style="margin-right: 20px;">
+                    <a href="roomop.html" style="text-decoration: none; color: inherit;">방 설정</a>
+                </li>
+            </ul>
+        </nav>
+        <div style="margin-left: auto; display: flex; align-items: center;">
+            <span id="userGreeting">안녕하세요, 사용자가름</span>
+            <button id="authButton" onclick="handleAuth()">로그아웃</button>
+        </div>
+    </header>
+
+    <main>
+        <section id="room-section">
+            <h2>방 참여</h2>
+            <input type="text" id="room-code" placeholder="방 코드 입력">
+            <input type="password" id="room-password" placeholder="비밀번호 입력">
+            <button id="joinButton" onclick="joinRoom()">참여하기</button>
+        </section>
+
+        <section id="room-list">
+            <h2>최근 생성된 방</h2>
+            <ul id="rooms">
+            </ul>
+        </section>
+    </main>
+
+    <script src="js/index.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const roomList = document.getElementById('rooms');
+            const roomListItems = roomList.children;
+
+            if (roomListItems.length === 0) {
+                roomList.innerHTML = '<li>방이 존재하지 않습니다.</li>';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>방 운영 관리</title>
+    <link rel="stylesheet" href="css/roomop.css">
+</head>
+<body>
+    <!-- 🔵 네비게이션 바 -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <div class="nav-logo">
+                <a href="index.html">PAS</a>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="roomop.html">방 설정</a></li>
+            </ul>
+        </div>
+        <div class="nav-actions">
+            <span id="userGreeting" style="display: none;"></span>
+            <button id="logoutButton" onclick="handleLogout()">로그아웃</button>
+        </div>
+    </nav>
+
+    <main>
+        <!-- 방 생성 -->
+        <section id="create-room-section">
+            <h2>방 생성</h2>
+            <input type="text" id="room-name" placeholder="방 이름">
+            <input type="password" id="room-password" placeholder="방 비밀번호">
+            <button onclick="createRoom()">방 생성</button>
+        </section>
+
+        <!-- 방 목록 -->
+        <section id="manage-rooms">
+            <h2>방 목록</h2>
+            <div id="room-grid" class="room-grid">
+            </div>
+        </section>
+    </main>
+    
+    <input type="file" id="imageInput" accept="image/*" style="display: none;">
+
+    <script src="js/roomop.js"></script>
+</body>
+</html>
