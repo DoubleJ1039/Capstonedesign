@@ -25,26 +25,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // 이미지 change 이벤트 핸들러
 function handleImageChange(e) {
-    console.log("파일 선택(change 이벤트) 발생");
-
     const file = e.target.files[0];
-    if (!file) {
-        console.log("파일이 선택되지 않음");
-        return;
-    }
-    if (!currentImageTargetCode) {
-        console.log("currentImageTargetCode가 설정되지 않음");
-        return;
-    }
-
-    console.log("선택된 파일:", file);
+    if (!file) return;
+    if (!currentImageTargetCode) return;
 
     const reader = new FileReader();
     reader.onloadend = function () {
-        console.log("FileReader onloadend 발생");
         const base64Image = reader.result.split(',')[1];
-
-        console.log("🔄 이미지 업로드 시작 (code):", currentImageTargetCode);
 
         fetch(`${API_URL}/rooms/updateImage/${currentImageTargetCode}`, {
             method: "PUT",
@@ -53,7 +40,6 @@ function handleImageChange(e) {
         })
         .then(res => res.json())
         .then(data => {
-            console.log("서버 응답:", data);
             if (data.success) {
                 alert("이미지가 업로드되었습니다!");
                 loadRooms(localStorage.getItem("loggedInUser"));
@@ -103,13 +89,9 @@ function createRoom() {
 }
 
 function loadRooms(loggedInUser) {
-    console.log("🔄 방 목록 불러오기 시작");
-
     fetch(`${API_URL}/rooms/list`)
         .then(response => response.json())
         .then(data => {
-            console.log("방 목록 불러오기 성공:", data);
-
             const roomGrid = document.getElementById("room-grid");
             roomGrid.innerHTML = "";
 
@@ -140,10 +122,13 @@ function loadRooms(loggedInUser) {
                 const code = document.createElement("div");
                 code.textContent = `코드: ${room.code}`;
 
+                // 삭제 버튼에 이미지 넣기
                 const deleteBtn = document.createElement("button");
-                deleteBtn.textContent = "×";
                 deleteBtn.className = "delete-btn";
-                // 방 삭제
+                const trashImg = document.createElement("img");
+                trashImg.src = "images/trash.png"; // 🔥 이미지 경로 확인!
+                trashImg.alt = "삭제";
+                deleteBtn.appendChild(trashImg);
                 deleteBtn.onclick = (event) => {
                     event.stopPropagation();
                     deleteRoom(room.code);
@@ -153,9 +138,7 @@ function loadRooms(loggedInUser) {
                 imageBtn.textContent = "이미지 추가하기";
                 imageBtn.onclick = (event) => {
                     event.stopPropagation();
-                    console.log("이미지 추가 버튼 클릭됨");
                     currentImageTargetCode = room.code;
-                    console.log("currentImageTargetCode:", currentImageTargetCode);
                     document.getElementById("imageInput").click();
                 };
 

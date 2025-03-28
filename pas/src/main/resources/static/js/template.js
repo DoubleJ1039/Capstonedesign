@@ -1,13 +1,21 @@
 let questions = [];
 let currentIndex = -1;
-let currentTemplate = 'classic'; // 기본 템플릿
+let currentTemplate = 'classic';
+
+const roomCode = new URLSearchParams(window.location.search).get("code");
+const label = document.createElement("div");
+label.className = "question-label";
 
 function addQuestion() {
   const newQuestion = {
     type: "multiple",
     text: "",
     choices: ["", ""],
-    image: ""
+    image: "",
+    name: "",
+    time: 30,
+    score: 100,
+    correctAnswer: []
   };
   questions.push(newQuestion);
   currentIndex = questions.length - 1;
@@ -18,22 +26,102 @@ function addQuestion() {
 function renderQuestionList() {
   const list = document.getElementById("question-list");
   list.innerHTML = "";
+
   questions.forEach((q, idx) => {
     const li = document.createElement("li");
-    li.textContent = `문제 ${idx + 1}`;
+    li.className = "question-item";
+    li.setAttribute("draggable", "true");
+    li.setAttribute("data-index", idx);
+
+    const label = document.createElement("div");
+    label.className = "question-label";
+
+    const titleSpan = document.createElement("span");
+    titleSpan.textContent = q.name || `문제 ${idx + 1}`;
+    label.appendChild(titleSpan);
+
+    const editBtn = document.createElement("img");
+    editBtn.src = "images/pencil.png";
+    editBtn.className = "edit-icon";
+    editBtn.title = "이름 수정";
+    editBtn.onclick = (e) => {
+      e.stopPropagation();
+      const newName = prompt("문제 이름을 입력하세요:", q.name || `문제 ${idx + 1}`);
+      if (newName !== null) {
+        q.name = newName;
+        renderQuestionList();
+      }
+    };
+
+    const deleteBtn = document.createElement("img");
+    deleteBtn.src = "images/trash.png";
+    deleteBtn.className = "delete-icon";
+    deleteBtn.title = "문제 삭제";
+    deleteBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (confirm(`문제 "${q.name || `문제 ${idx + 1}`}"을 삭제할까요?`)) {
+        questions.splice(idx, 1);
+        if (currentIndex >= idx) currentIndex--;
+        if (questions.length === 0) {
+          currentIndex = -1;
+        } else if (currentIndex < 0) {
+          currentIndex = 0;
+        }
+        renderQuestionList();
+        if (currentIndex >= 0) loadQuestion(currentIndex);
+      }
+    };
+
+    const iconBox = document.createElement("div");
+    iconBox.style.display = "flex";
+    iconBox.style.gap = "6px";
+    iconBox.appendChild(editBtn);
+    iconBox.appendChild(deleteBtn);
+    label.appendChild(iconBox);
+
+    li.appendChild(label);
+
+    if (q.image) {
+      const thumb = document.createElement("img");
+      thumb.src = q.image;
+      thumb.className = "thumbnail";
+      li.appendChild(thumb);
+    }
+
     li.onclick = () => loadQuestion(idx);
     list.appendChild(li);
   });
+
+  initDragAndDrop();
 }
+
 
 function loadQuestion(index) {
   currentIndex = index;
   const q = questions[index];
   document.getElementById("question-type").value = q.type;
   document.getElementById("question-text").value = q.text;
+  document.getElementById("question-time").value = q.time || 30;
+  document.getElementById("question-score").value = q.score || 100;
+
+  const previewImg = document.getElementById("custom-upload-button");
+  if (previewImg) {
+    previewImg.src = q.image || "images/noimg.png";
+  }
+
   updateChoices();
+  updateAnswerUI();
   renderPreview();
 }
+
+document.getElementById("remove-image-button").addEventListener("click", () => {
+  if (currentIndex < 0) return;
+  questions[currentIndex].image = "";
+  document.getElementById("custom-upload-button").src = "images/noimg.png";
+  renderPreview();
+  renderQuestionList();
+});
+
 
 function updateChoices() {
   const container = document.getElementById("choices-container");
@@ -45,8 +133,7 @@ function updateChoices() {
   if (type === "ox") {
     q.choices = ["O", "X"];
   } else if (type === "short") {
-    q.choices = [""];
-    container.innerHTML = "<p>단답형은 보기 입력이 필요 없습니다.</p>";
+    q.choices = [];
   } else {
     if (!q.choices || q.choices.length < 2) q.choices = ["", ""];
     q.choices.forEach((choice, idx) => {
@@ -71,70 +158,299 @@ function updateChoices() {
     }
   }
 
+  updateAnswerUI();
   renderPreview();
 }
 
+document.getElementById("question-type").addEventListener("change", updateChoices);
 document.getElementById("question-text").addEventListener("input", e => {
   if (currentIndex >= 0) {
     questions[currentIndex].text = e.target.value;
     renderPreview();
   }
 });
+document.getElementById("question-time").addEventListener("input", e => {
+  if (currentIndex >= 0) {
+    questions[currentIndex].time = parseInt(e.target.value) || 30;
+    renderPreview();
+  }
+});
+document.getElementById("question-score").addEventListener("input", e => {
+  if (currentIndex >= 0) {
+    questions[currentIndex].score = parseInt(e.target.value) || 100;
+  }
+});
+
+function updateAnswerUI() {
+  const container = document.getElementById("answer-settings");
+  container.innerHTML = "";
+  const q = questions[currentIndex];
+  if (!q) return;
+
+  if (q.type === "multiple") {
+    const label = document.createElement("label");
+    label.textContent = "정답 개수";
+    const select = document.createElement("select");
+    [1, 2, 3, 4].forEach(n => {
+      const option = document.createElement("option");
+      option.value = n;
+      option.textContent = n;
+      select.appendChild(option);
+    });
+    container.appendChild(label);
+    container.appendChild(select);
+
+    const inputArea = document.createElement("div");
+    inputArea.className = "answer-number-boxes";
+    container.appendChild(inputArea);
+
+    function renderInputs(count) {
+      inputArea.innerHTML = "";
+      if (!Array.isArray(q.correctAnswer) || q.correctAnswer.length !== count) {
+        let existing = Array.isArray(q.correctAnswer) ? q.correctAnswer : [];
+        q.correctAnswer = new Array(count);
+        for (let i = 0; i < count; i++) {
+          q.correctAnswer[i] = existing[i];
+        }
+      }
+      for (let i = 0; i < count; i++) {
+        const input = document.createElement("input");
+        input.type = "number";
+        input.min = 1;
+        input.max = 4;
+        input.placeholder = `정답 ${i + 1}`;
+        if (q.correctAnswer[i] !== undefined && q.correctAnswer[i] !== null) {
+          input.value = q.correctAnswer[i] + 1;
+        }
+        input.oninput = e => {
+          q.correctAnswer[i] = parseInt(e.target.value) - 1;
+        };
+        inputArea.appendChild(input);
+      }
+    }
+
+    const answerCount = Array.isArray(q.correctAnswer) && q.correctAnswer.length > 0 
+                        ? q.correctAnswer.length 
+                        : 1;
+    select.value = answerCount;
+    renderInputs(answerCount);
+
+    select.addEventListener("change", e => {
+      renderInputs(parseInt(e.target.value));
+    });
+  } else if (q.type === "ox") {
+    const input = document.createElement("input");
+    input.placeholder = "정답 (O 또는 X)";
+    input.maxLength = 1;
+    if (typeof q.correctAnswer === "string") {
+      input.value = q.correctAnswer;
+    }
+    input.oninput = e => {
+      q.correctAnswer = e.target.value.toUpperCase();
+    };
+    container.appendChild(input);
+  } else if (q.type === "short") {
+    const textarea = document.createElement("textarea");
+    textarea.placeholder = "정답 텍스트 입력";
+    if (typeof q.correctAnswer === "string") {
+      textarea.value = q.correctAnswer;
+    }
+    textarea.oninput = e => {
+      q.correctAnswer = e.target.value;
+    };
+    container.appendChild(textarea);
+  }
+}
 
 function handleImageUpload(event) {
   const file = event.target.files[0];
   if (!file || currentIndex < 0) return;
-
   const reader = new FileReader();
   reader.onload = function (e) {
-    questions[currentIndex].image = e.target.result;
+    const imageData = e.target.result;
+    questions[currentIndex].image = imageData;
+
+    const previewImg = document.getElementById("custom-upload-button");
+    if (previewImg) {
+      previewImg.src = imageData;
+    }
+
     renderPreview();
+    renderQuestionList();
   };
   reader.readAsDataURL(file);
 }
 
+
 function renderPreview() {
-    if (currentIndex < 0) return;
-    const q = questions[currentIndex];
-    document.getElementById("preview-text").textContent = q.text;
-  
-    const img = document.getElementById("preview-image");
-    img.style.display = q.image ? "block" : "none";
-    img.src = q.image || "";
-  
-    const container = document.getElementById("preview-choices");
-    container.innerHTML = "";
-  
-    if (q.type === "multiple") {
-      q.choices.forEach((choice, idx) => {
-        const div = document.createElement("div");
-        div.className = "preview-choice";
-  
-        const iconImg = document.createElement("img");
-        iconImg.src = `images/choice${idx + 1}.png`;
-  
-        const label = document.createElement("div");
-        label.textContent = choice;
-  
-        div.appendChild(iconImg);
-        div.appendChild(label);
-        container.appendChild(div);
-      });
-    } else if (q.type === "ox") {
-      ["O", "X"].forEach((val, idx) => {
-        const div = document.createElement("div");
-        div.className = "preview-choice";
-  
-        const iconImg = document.createElement("img");
-        iconImg.src = `images/choice${idx + 1}.png`;
-  
-        const label = document.createElement("div");
-        label.textContent = val;
-  
-        div.appendChild(iconImg);
-        div.appendChild(label);
-        container.appendChild(div);
-      });
-    }
+  if (currentIndex < 0) return;
+  const q = questions[currentIndex];
+  document.getElementById("preview-time").textContent = `${q.time || 30}초`;
+  document.getElementById("preview-score").textContent = `배점: ${q.score || 100}점`;
+  document.getElementById("preview-text").textContent = q.text;
+
+  const img = document.getElementById("preview-image");
+  img.style.display = q.image ? "block" : "none";
+  img.src = q.image || "";
+
+  const container = document.getElementById("preview-choices");
+  container.innerHTML = "";
+
+  if (q.type === "short") {
+    const answerDiv = document.createElement("div");
+    answerDiv.className = "short-answer-box";
+
+    container.appendChild(answerDiv);
+  } else {
+    const grid = document.createElement("div");
+    grid.className = "answer-grid";
+    const choicesToRender = q.type === "ox" ? ["O", "X"] : q.choices;
+    choicesToRender.forEach((choice, idx) => {
+      const choiceDiv = document.createElement("div");
+      choiceDiv.className = "choice-box";
+      choiceDiv.style.backgroundImage = `url('images/choice${idx + 1}.png')`;
+      const label = document.createElement("div");
+      label.className = "choice-label";
+      label.textContent = choice;
+      choiceDiv.appendChild(label);
+      grid.appendChild(choiceDiv);
+    });
+    container.appendChild(grid);
   }
-  
+
+  const previewBox = document.getElementById("preview-box");
+  previewBox.style.backgroundImage = `url('/images/${currentTemplate}.png')`;
+  previewBox.style.backgroundSize = "cover";
+  previewBox.style.backgroundPosition = "center";
+  previewBox.style.backgroundRepeat = "no-repeat";
+}
+
+
+function selectTemplate(templateName) {
+  currentTemplate = templateName;
+  renderPreview();
+}
+
+function initDragAndDrop() {
+  const listItems = document.querySelectorAll(".question-item");
+  let dragStartIndex;
+  listItems.forEach(item => {
+    item.addEventListener("dragstart", () => {
+      dragStartIndex = +item.dataset.index;
+      item.classList.add("dragging");
+    });
+    item.addEventListener("dragover", e => {
+      e.preventDefault();
+      item.classList.add("drag-over");
+    });
+    item.addEventListener("dragleave", () => {
+      item.classList.remove("drag-over");
+    });
+    item.addEventListener("drop", () => {
+      const dropIndex = +item.dataset.index;
+      reorderQuestions(dragStartIndex, dropIndex);
+      item.classList.remove("drag-over");
+    });
+    item.addEventListener("dragend", () => {
+      item.classList.remove("dragging");
+    });
+  });
+}
+
+function reorderQuestions(from, to) {
+  if (from === to) return;
+  const moved = questions.splice(from, 1)[0];
+  questions.splice(to, 0, moved);
+  renderQuestionList();
+  if (currentIndex === from) currentIndex = to;
+  else if (from < currentIndex && currentIndex <= to) currentIndex--;
+  else if (from > currentIndex && currentIndex >= to) currentIndex++;
+  loadQuestion(currentIndex);
+}
+
+function convertQuestionsToQueFormat() {
+  return questions.map(q => {
+    let formattedAnswer;
+    if (q.type === "multiple") {
+      formattedAnswer = Array.isArray(q.correctAnswer) ? q.correctAnswer : [];
+    } else if (q.type === "ox" || q.type === "short") {
+      formattedAnswer = typeof q.correctAnswer === "string" ? q.correctAnswer : "";
+    } else {
+      formattedAnswer = "";
+    }
+    return {
+      type: q.type || "multiple",
+      name: q.name || "",
+      questionText: q.text,
+      questionImage: q.image,
+      choices: q.choices,
+      correctAnswer: formattedAnswer,
+      time: q.time || 30,
+      score: q.score || 100
+    };
+  });
+}
+
+document.getElementById("save-button").addEventListener("click", () => {
+  const queList = convertQuestionsToQueFormat();
+  if (!roomCode) {
+    alert("방 코드가 없습니다.");
+    return;
+  }
+  fetch(`/api/rooms/${roomCode}/questions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(queList)
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) alert("저장되었습니다!");
+      else alert("저장 실패: " + data.message);
+    })
+    .catch(err => {
+      console.error(err);
+      alert("저장 중 오류가 발생했습니다.");
+    });
+});
+
+document.getElementById("exit-button").addEventListener("click", () => {
+  window.location.href = "/roomop.html";
+});
+
+window.addEventListener("DOMContentLoaded", () => {
+  if (!roomCode) {
+    alert("방 코드가 없습니다.");
+    return;
+  }
+
+  fetch(`/api/rooms/info?code=${roomCode}`)
+    .then(res => res.json())
+    .then(data => {
+      console.log("백엔드 응답:", data);
+      if (data.success && data.testQuestions) {
+        questions = data.testQuestions.map(q => {
+          let parsedAnswer = q.correctAnswer;
+          if (typeof parsedAnswer === "string" || Array.isArray(parsedAnswer)) {
+          } else if (typeof parsedAnswer === "number") {
+            parsedAnswer = [parsedAnswer];
+          } else {
+            parsedAnswer = [];
+          }
+          return {
+            type: q.type || "multiple",
+            text: q.questionText,
+            image: q.questionImage,
+            choices: q.choices || [],
+            correctAnswer: parsedAnswer,
+            name: q.name || "",
+            time: q.time || 30,
+            score: q.score || 100
+          };
+        });
+        currentIndex = 0;
+        renderQuestionList();
+        loadQuestion(currentIndex);
+      }
+    })
+});
+

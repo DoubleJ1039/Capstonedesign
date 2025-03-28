@@ -1,6 +1,7 @@
 package com.example.pas.controllers;
 
 import com.example.pas.models.Room;
+import com.example.pas.models.que;
 import com.example.pas.repositories.RoomRepository;
 import org.springframework.web.bind.annotation.*;
 
@@ -155,7 +156,6 @@ public class RoomController {
         return roomRepository.findAll();
     }
 
-    // 방 정보 조회
     @GetMapping("/info")
     public Map<String, Object> getRoomInfo(@RequestParam String code) {
         Optional<Room> roomOptional = roomRepository.findByCode(code);
@@ -164,11 +164,16 @@ public class RoomController {
         }
 
         Room room = roomOptional.get();
-        return Map.of(
-                "success", true,
-                "name", room.getName(),
-                "participants", room.getParticipants(),
-                "imageBase64", room.getImageBase64());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("name", room.getName());
+        response.put("participants", room.getParticipants());
+        response.put("imageBase64", room.getImageBase64());
+
+        response.put("testQuestions", room.getTestQuestions() != null ? room.getTestQuestions() : new ArrayList<>());
+
+        return response;
     }
 
     // 방 비밀번호 확인
@@ -198,4 +203,23 @@ public class RoomController {
     private String generateRoomCode() {
         return UUID.randomUUID().toString().substring(0, 4).toUpperCase();
     }
+
+    // 문제 저장
+    @PostMapping("/{code}/questions")
+    public Map<String, Object> saveTestQuestions(
+            @PathVariable String code,
+            @RequestBody List<que> questions) {
+
+        Optional<Room> optionalRoom = roomRepository.findByCode(code);
+        if (optionalRoom.isEmpty()) {
+            return Map.of("success", false, "message", "방을 찾을 수 없습니다.");
+        }
+
+        Room room = optionalRoom.get();
+        room.setTestQuestions(questions);
+        roomRepository.save(room);
+
+        return Map.of("success", true, "message", "문제 리스트가 저장되었습니다.");
+    }
+
 }

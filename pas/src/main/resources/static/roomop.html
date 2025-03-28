@@ -7,21 +7,24 @@
     <link rel="stylesheet" href="css/roomop.css">
 </head>
 <body>
-    <!-- 🔵 네비게이션 바 -->
-    <nav class="navbar">
-        <div class="nav-left">
-            <div class="nav-logo">
-                <a href="index.html">PAS</a>
-            </div>
+    <!-- 네비게이션 바 -->
+    <div class="navbar">
+        <div class="nav-logo">
+            <a href="index.html">PAS</a>
+        </div>
+        <div class="nav-center">
             <ul class="nav-menu">
                 <li><a href="roomop.html">방 설정</a></li>
+                <li><a href="#">추가</a></li>
+                <li><a href="#">추가</a></li>
+                <li><a href="#">추가</a></li>
             </ul>
         </div>
         <div class="nav-actions">
-            <span id="userGreeting" style="display: none;"></span>
+            <span id="userGreeting"></span>
             <button id="logoutButton" onclick="handleLogout()">로그아웃</button>
         </div>
-    </nav>
+    </div>
 
     <main>
         <!-- 방 생성 -->
@@ -39,9 +42,8 @@
             </div>
         </section>
     </main>
-    
-    <input type="file" id="imageInput" accept="image/*" style="display: none;">
 
+    <input type="file" id="imageInput" accept="image/*" style="display: none;">
     <script src="js/roomop.js"></script>
 </body>
 </html>

@@ -1,52 +1,88 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>문제 템플릿 생성</title>
-  <link rel="stylesheet" href="css/template.css">
+  <link rel="stylesheet" href="css/template.css" />
 </head>
 <body>
   <div class="container">
-    <!-- 왼쪽: 문제 리스트 -->
+
+    <!-- 왼쪽: 문제 리스트 + 템플릿 선택 -->
     <div class="sidebar">
-      <h3>문제 리스트</h3>
-      <ul id="question-list"></ul>
-      <button onclick="addQuestion()">문제 추가</button>
-    </div>
-
-    <!-- 중앙: 문제 입력 -->
-    <div class="editor">
-      <h3>문제 편집</h3>
-      <select id="question-type" onchange="updateChoices()">
-        <option value="multiple">객관식</option>
-        <option value="ox">O/X</option>
-        <option value="short">단답형</option>
-      </select>
-      <textarea id="question-text" placeholder="문제를 입력하세요..."></textarea>
-      <input type="file" id="image-upload" accept="image/*" onchange="handleImageUpload(event)">
-      <div id="choices-container"></div>
-    </div>
-
-    <!-- 오른쪽: 미리보기 -->
-    <div class="preview">
-      <h3>미리보기</h3>
-      <div id="preview-box" class="template-classic">
-        <p id="preview-text"></p>
-        <img id="preview-image" src="" alt="" style="max-width: 100%; display: none;">
-        <ul id="preview-choices"></ul>
+      <div class="question-list">
+        <h3>문제 리스트</h3>
+        <ul id="question-list"></ul>
+        <button onclick="addQuestion()">문제 추가</button>
       </div>
 
-      <!-- 템플릿 선택 -->
       <div class="template-selector">
         <h4>템플릿 선택</h4>
         <div class="template-options">
           <div class="template-box" onclick="selectTemplate('classic')">Classic</div>
-          <div class="template-box" onclick="selectTemplate('modern')">Modern</div>
-          <div class="template-box" onclick="selectTemplate('fancy')">Fancy</div>
+          <div class="template-box" onclick="selectTemplate('purple')">Purple</div>
         </div>
       </div>
+      
     </div>
+
+    <!-- 중앙: 미리보기 -->
+    <div class="preview">
+      <div id="preview-box" class="template-classic">
+        <div class="preview-question-wrapper">
+          <p id="preview-text" class="preview-question-text"></p>
+          <div id="preview-time" class="preview-time"></div>
+        </div>
+
+        <div id="preview-score" class="preview-score"></div>
+
+        <div class="preview-image-wrapper">
+          <img id="preview-image" src="" alt="" style="display: none;" />
+        </div>
+
+        <div id="preview-choices" class="answer-grid"></div>
+      </div>
+    </div>
+
+<!-- 오른쪽: 문제 편집 -->
+<div class="editor">
+  <h3>문제 편집</h3>
+
+  <label for="question-type">문제 유형</label>
+  <select id="question-type" onchange="updateChoices()">
+    <option value="multiple">객관식</option>
+    <option value="ox">O/X</option>
+    <option value="short">단답형</option>
+  </select>
+
+  <textarea id="question-text" placeholder="문제를 입력하세요..."></textarea>
+
+  <div class="image-upload-wrapper">
+    <label for="image-upload">
+      <img id="custom-upload-button" src="images/noimg.png" alt="이미지 선택" />
+    </label>
+    <button id="remove-image-button">이미지 삭제</button>
+  </div>
+  <input type="file" id="image-upload" accept="image/*" onchange="handleImageUpload(event)" style="display: none;" />  
+
+  <div id="choices-container"></div>
+
+  <label for="question-time">시간 (초)</label>
+  <input type="number" id="question-time" min="5" max="300" step="5" value="30"/>
+
+  <label for="question-score">배점</label>
+  <input type="number" id="question-score" min="0" step="10" value="100"/>
+
+  <div id="answer-settings" class="answer-settings"></div>
+
+  <div class="editor-buttons">
+    <button id="save-button">저장하기</button>
+    <button id="exit-button" class="exit">나가기</button>
+  </div>
+</div>
+
+
   </div>
 
   <script src="js/template.js"></script>
