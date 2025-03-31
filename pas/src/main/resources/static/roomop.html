@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>방 운영 관리</title>
     <link rel="stylesheet" href="css/roomop.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 </head>
+
 <body>
     <!-- 네비게이션 바 -->
     <div class="navbar">
@@ -42,8 +44,17 @@
             </div>
         </section>
     </main>
-
     <input type="file" id="imageInput" accept="image/*" style="display: none;">
+
+        <!-- QR 코드 모달 -->
+        <div id="qrModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>방 참여 QR 코드</h2>
+                <div id="qrCode"></div>
+                <p id="roomCodeText"></p>
+            </div>
+        </div>
     <script src="js/roomop.js"></script>
 </body>
 </html>

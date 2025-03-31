@@ -23,7 +23,6 @@ document.addEventListener("DOMContentLoaded", () => {
     imageInput.addEventListener("change", handleImageChange);
 });
 
-// 이미지 change 이벤트 핸들러
 function handleImageChange(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -109,6 +108,10 @@ function loadRooms(loggedInUser) {
                 const card = document.createElement("div");
                 card.className = "room-card";
 
+                // 이미지 + 휴지통 버튼 wrapper
+                const imgWrapper = document.createElement("div");
+                imgWrapper.className = "room-image-wrapper";
+
                 const img = document.createElement("img");
                 img.src = room.imageBase64
                     ? `data:image/png;base64,${room.imageBase64}`
@@ -116,17 +119,10 @@ function loadRooms(loggedInUser) {
                 img.alt = "Room Image";
                 img.className = "room-image";
 
-                const title = document.createElement("div");
-                title.textContent = room.name;
-
-                const code = document.createElement("div");
-                code.textContent = `코드: ${room.code}`;
-
-                // 삭제 버튼에 이미지 넣기
                 const deleteBtn = document.createElement("button");
                 deleteBtn.className = "delete-btn";
                 const trashImg = document.createElement("img");
-                trashImg.src = "images/trash.png"; // 🔥 이미지 경로 확인!
+                trashImg.src = "images/trash.png";
                 trashImg.alt = "삭제";
                 deleteBtn.appendChild(trashImg);
                 deleteBtn.onclick = (event) => {
@@ -134,19 +130,44 @@ function loadRooms(loggedInUser) {
                     deleteRoom(room.code);
                 };
 
+                imgWrapper.appendChild(img);
+                imgWrapper.appendChild(deleteBtn);
+
+                // 텍스트 정보
+                const info = document.createElement("div");
+                info.className = "room-info";
+                const title = document.createElement("div");
+                title.textContent = room.name;
+                const code = document.createElement("div");
+                code.textContent = `코드: ${room.code}`;
+                info.appendChild(title);
+                info.appendChild(code);
+
+                // 버튼 그룹
+                const btnGroup = document.createElement("div");
+                btnGroup.className = "room-buttons";
+
                 const imageBtn = document.createElement("button");
-                imageBtn.textContent = "이미지 추가하기";
+                imageBtn.textContent = "이미지 변경";
                 imageBtn.onclick = (event) => {
                     event.stopPropagation();
                     currentImageTargetCode = room.code;
                     document.getElementById("imageInput").click();
                 };
 
-                card.appendChild(deleteBtn);
-                card.appendChild(img);
-                card.appendChild(title);
-                card.appendChild(code);
-                card.appendChild(imageBtn);
+                const qrBtn = document.createElement("button");
+                qrBtn.textContent = "QR";
+                qrBtn.onclick = (event) => {
+                    event.stopPropagation();
+                    showQRCode(room.code);
+                };
+
+                btnGroup.appendChild(imageBtn);
+                btnGroup.appendChild(qrBtn);
+
+                card.appendChild(imgWrapper);
+                card.appendChild(info);
+                card.appendChild(btnGroup);
 
                 card.onclick = () => {
                     window.location.href = `room-template.html?code=${room.code}`;
@@ -172,4 +193,31 @@ function deleteRoom(code) {
             }
         })
         .catch(error => console.error("방 삭제 오류:", error));
+}
+
+// QR 코드 표시 함수
+function showQRCode(roomCode) {
+    const modal = document.getElementById("qrModal");
+    const qrCodeDiv = document.getElementById("qrCode");
+    const roomCodeText = document.getElementById("roomCodeText");
+
+    const qr = qrcode(0, 'M');
+    qr.addData(`${window.location.origin}/index.html?code=${roomCode}`);
+    qr.make();
+
+    qrCodeDiv.innerHTML = qr.createImgTag(8);
+    roomCodeText.textContent = `방 코드: ${roomCode}`;
+
+    modal.style.display = "block";
+
+    const closeBtn = modal.querySelector(".close");
+    closeBtn.onclick = function () {
+        modal.style.display = "none";
+    };
+
+    window.onclick = function (event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    };
 }
