@@ -3,14 +3,16 @@ package com.example.pas.models;
 import java.util.List;
 
 public class que {
-    private String questionText; // 문제 내용
-    private String questionImage; // 문제 이미지
-    private List<String> choices; // 보기
-    private Object correctAnswer; // 정답
-    private String name; // 문제 제목
-    private int time; // 제한 시간 (초)
-    private int score; // 배점
-    private String type; // 문제 유형
+    private String questionText;
+    private String questionImage;
+    private List<String> choices;
+    private Object correctAnswer;
+    private String name;
+    private int time;
+    private int score;
+    private String type;
+
+    private String templateImageName;
 
     public que() {
     }
@@ -90,5 +92,13 @@ public class que {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public String getTemplateImageName() {
+        return templateImageName;
+    }
+
+    public void setTemplateImageName(String templateImageName) {
+        this.templateImageName = templateImageName;
     }
 }

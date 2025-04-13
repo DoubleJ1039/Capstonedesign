@@ -23,35 +23,43 @@ document.addEventListener("DOMContentLoaded", () => {
     imageInput.addEventListener("change", handleImageChange);
 });
 
-function handleImageChange(e) {
+async function handleImageChange(e) {
     const file = e.target.files[0];
-    if (!file) return;
-    if (!currentImageTargetCode) return;
+    if (!file || !currentImageTargetCode) return;
 
-    const reader = new FileReader();
-    reader.onloadend = function () {
-        const base64Image = reader.result.split(',')[1];
+    const formData = new FormData();
+    formData.append("file", file);
 
-        fetch(`${API_URL}/rooms/updateImage/${currentImageTargetCode}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ imageBase64: base64Image })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
+    try {
+        alert("업로드 중입니다...");
+        const res = await fetch("/api/upload/image", {
+            method: "POST",
+            body: formData
+        });
+        const data = await res.json();
+        if (data.secure_url && data.public_id) {
+            const updateRes = await fetch(`${API_URL}/rooms/updateImage/${currentImageTargetCode}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    imageUrl: data.secure_url,
+                    imagePublicId: data.public_id
+                })
+            });
+            const updateData = await updateRes.json();
+            if (updateData.success) {
                 alert("이미지가 업로드되었습니다!");
                 loadRooms(localStorage.getItem("loggedInUser"));
             } else {
-                alert("이미지 업로드 실패: " + data.message);
+                alert("이미지 저장 실패: " + updateData.message);
             }
-        })
-        .catch(err => {
-            console.error("업로드 오류:", err);
-        });
-    };
-
-    reader.readAsDataURL(file);
+        } else {
+            alert("Cloudinary 업로드 실패");
+        }
+    } catch (err) {
+        console.error("이미지 업로드 오류:", err);
+        alert("이미지 업로드 중 오류 발생");
+    }
 }
 
 function handleLogout() {
@@ -108,14 +116,11 @@ function loadRooms(loggedInUser) {
                 const card = document.createElement("div");
                 card.className = "room-card";
 
-                // 이미지 + 휴지통 버튼 wrapper
                 const imgWrapper = document.createElement("div");
                 imgWrapper.className = "room-image-wrapper";
 
                 const img = document.createElement("img");
-                img.src = room.imageBase64
-                    ? `data:image/png;base64,${room.imageBase64}`
-                    : "images/noimg.png";
+                img.src = room.imageUrl || "images/noimg.png";
                 img.alt = "Room Image";
                 img.className = "room-image";
 
@@ -125,15 +130,15 @@ function loadRooms(loggedInUser) {
                 trashImg.src = "images/trash.png";
                 trashImg.alt = "삭제";
                 deleteBtn.appendChild(trashImg);
+
                 deleteBtn.onclick = (event) => {
                     event.stopPropagation();
-                    deleteRoom(room.code);
+                    deleteRoom(room.code, room.imagePublicId);
                 };
 
                 imgWrapper.appendChild(img);
                 imgWrapper.appendChild(deleteBtn);
 
-                // 텍스트 정보
                 const info = document.createElement("div");
                 info.className = "room-info";
                 const title = document.createElement("div");
@@ -143,7 +148,6 @@ function loadRooms(loggedInUser) {
                 info.appendChild(title);
                 info.appendChild(code);
 
-                // 버튼 그룹
                 const btnGroup = document.createElement("div");
                 btnGroup.className = "room-buttons";
 
@@ -162,8 +166,30 @@ function loadRooms(loggedInUser) {
                     showQRCode(room.code);
                 };
 
+                const quizStateBtn = document.createElement("button");
+                if (room.started) {
+                    quizStateBtn.textContent = "퀴즈 종료";
+                    quizStateBtn.onclick = async (event) => {
+                        event.stopPropagation();
+                        const res = await fetch(`${API_URL}/rooms/setStart/${room.code}`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ isStarted: false })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            alert("퀴즈가 종료되었습니다.");
+                            loadRooms(loggedInUser);
+                        }
+                    };
+                } else {
+                    quizStateBtn.textContent = "대기중";
+                    quizStateBtn.disabled = true;
+                }
+
                 btnGroup.appendChild(imageBtn);
                 btnGroup.appendChild(qrBtn);
+                btnGroup.appendChild(quizStateBtn);
 
                 card.appendChild(imgWrapper);
                 card.appendChild(info);
@@ -179,21 +205,34 @@ function loadRooms(loggedInUser) {
         .catch(error => console.error("방 목록 불러오기 오류:", error));
 }
 
-function deleteRoom(code) {
+function deleteRoom(code, publicId) {
     if (!confirm("정말 이 방을 삭제하시겠습니까?")) return;
+    if (publicId) {
+      fetch(`/api/upload/delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ publicId })
+      })
+      .then(res => res.json())
+      .then(data => {
+        console.log("이미지 삭제 결과:", data);
+      })
+      .catch(err => console.error("이미지 삭제 실패:", err));
+    }
 
     fetch(`${API_URL}/rooms/delete/${code}`, { method: "DELETE" })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert("방 삭제 성공!");
-                loadRooms(localStorage.getItem("loggedInUser"));
-            } else {
-                alert("방 삭제 실패: " + data.message);
-            }
-        })
-        .catch(error => console.error("방 삭제 오류:", error));
-}
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert("방 삭제 성공!");
+          loadRooms(localStorage.getItem("loggedInUser"));
+        } else {
+          alert("방 삭제 실패: " + data.message);
+        }
+      })
+      .catch(error => console.error("방 삭제 오류:", error));
+  }
+  
 
 // QR 코드 표시 함수
 function showQRCode(roomCode) {

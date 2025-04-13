@@ -1,92 +1,127 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PAS</title>
-    <link rel="stylesheet" href="/quiz.css">
-    <style>
-        body {
-            background-color: rgb(75, 138, 143);
-            color: white;
-            font-family: Arial, sans-serif;
-        }
-        .btn {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .btn-container {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .hide {
-            display: none;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>퀴즈</title>
+  <link rel="stylesheet" href="css/quiz.css" />
 </head>
 <body>
-    <header>
-        <h1>PAS</h1>
-        <button id="create-quiz-button" class="btn">퀴즈 만들기</button>
-    </header>
-    <main>
-        <div id="quiz-container" class="hide">
-            <h2 id="question"></h2>
-            <div id="answer-buttons" class="btn-container"></div>
-            <p id="timer">남은 시간: <span id="time">10</span>초</p>
-            <button id="next-button" class="btn hide">다음 질문</button>
-        </div>
-        <div id="create-quiz-container" class="hide">
-            <h2>퀴즈 만들기</h2>
-            <input type="text" id="quiz-question" placeholder="질문 입력">
-            <input type="text" id="quiz-answer1" placeholder="정답 입력">
-            <input type="text" id="quiz-answer2" placeholder="오답 입력">
-            <button id="add-answer" class="btn">추가 정답/오답</button>
-            <div id="extra-answers"></div>
-            <button id="submit-quiz-button" class="btn">퀴즈 제출</button>
-        </div>
-    </main>
-    <footer>
-        <p>&copy; 2025 PAS</p>
-    </footer>
 
-    <!-- 퀴즈 관련 스크립트 -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const createQuizButton = document.getElementById('create-quiz-button');
-            const createQuizContainer = document.getElementById('create-quiz-container');
-            const quizContainer = document.getElementById('quiz-container');
-            
-            // 퀴즈 만들기 버튼 클릭 이벤트
-            createQuizButton.addEventListener('click', () => {
-                createQuizContainer.classList.toggle('hide');
-                quizContainer.classList.add('hide');
-            });
-            
-            // 추가 정답/오답 버튼 클릭 이벤트
-            const addAnswerButton = document.getElementById('add-answer');
-            addAnswerButton.addEventListener('click', () => {
-                const extraAnswersDiv = document.getElementById('extra-answers');
-                const newAnswerInput = document.createElement('input');
-                newAnswerInput.type = 'text';
-                newAnswerInput.placeholder = '추가 정답/오답';
-                extraAnswersDiv.appendChild(newAnswerInput);
-            });
+<!-- 로비 화면 -->
+<div id="lobbyScreen" class="fullscreen">
+  <div class="background-overlay"></div>
+  <div class="lobby-container">
+    <div class="nickname-box">
+      <div class="player-count">참여자: <span id="playerCount">0</span></div>
+      <input type="text" id="nicknameInput" placeholder="닉네임을 입력하세요" />
+      <button id="confirmNicknameBtn">닉네임 확정</button>
+      <button id="startQuizBtn" style="display: none;">퀴즈 시작</button>
+    </div>
+    <div class="participants-box">
+      <h3>참여자 목록</h3>
+      <ul id="participantsList"></ul>
+    </div>
+  </div>
+</div>
 
-            // 퀴즈 제출 버튼 클릭 이벤트
-            const submitQuizButton = document.getElementById('submit-quiz-button');
-            submitQuizButton.addEventListener('click', () => {
-                const question = document.getElementById('quiz-question').value;
-                const answer1 = document.getElementById('quiz-answer1').value;
-                const answer2 = document.getElementById('quiz-answer2').value;
-                console.log(`질문: ${question}, 정답: ${answer1}, 오답: ${answer2}`);
-            });
-        });
-    </script>
+<!-- 퀴즈 화면 -->
+<div id="quizScreen" style="display: none;">
+  <div class="quiz-container">
+
+    <!-- 왼쪽 -->
+    <aside class="left-panel">
+      <div id="roomCodeBox">
+        <p>방 코드: <span id="roomCode">----</span></p>
+      </div>
+
+      <div class="chat-box">
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-box">
+          <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." />
+          <button id="sendChatBtn">전송</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 오른쪽 -->
+    <section class="right-panel">
+      <main class="quiz-main">
+        <section class="question-box">
+
+          <!-- 문제 컨트롤 버튼 -->
+          <div id="topControls" class="top-controls-inside" style="display: none;">
+            <button id="nextQuestionBtn" style="display: none;">다음 문제 →</button>
+            <button id="showResultBtn" style="display: none;">결과 보기</button>
+            <div id="questionNumberBox">
+              문제 <span id="questionNumber">1</span> / <span id="totalQuestions">?</span>
+            </div>
+            <button id="goToFirstBtn">1번 문제로</button>
+          </div>
+
+          <div id="templateBackground" class="template-background">
+
+            <!-- 문제 텍스트 -->
+            <div class="question-title-box">
+              <h2 id="questionText">문제 로딩 중...</h2>
+            </div>
+
+            <!-- 문제 이미지 -->
+            <div class="question-image-box">
+              <img id="questionImage" src="" alt="문제 이미지" />
+              <div id="timerBox">
+                <span id="timerText">00</span>
+              </div>
+            </div>
+            
+            <!-- 객관식/선택지 -->
+            <div class="choices-container">
+              <ul id="choicesList" class="choices-list"></ul>
+            </div>
+
+            <!-- 제출 버튼 -->
+            <div class="submit-button-wrapper" style="text-align: center; margin-top: 31px;">
+              <button id="submitAnswerBtn" class="submit-btn">제출하기</button>
+            </div>
+
+            <!-- 주관식 입력 -->
+            <div class="short-answer-box" style="display: none;">
+              <textarea id="shortAnswerInput" placeholder="정답을 입력하세요..."></textarea>
+            </div>
+
+            <!-- 결과 보기 모달 -->
+            <div id="resultModal" class="result-modal" style="display: none;">
+              <div class="result-modal-content">
+                <h2>결과 보기</h2>
+
+                <div class="result-item">
+                  <strong>정답자 비율:</strong>
+                  <span id="correctRateText">-</span>
+                </div>
+
+                <div class="result-item">
+                  <strong>점수 랭킹:</strong>
+                  <ol id="scoreRankingList"></ol>
+                </div>
+
+                <div class="result-item">
+                  <strong>가장 빠르게 맞춘 TOP3:</strong>
+                  <ol id="fastestList"></ol>
+                </div>
+
+                <button id="closeResultBtn">확인</button>
+              </div>
+            </div>
+
+          </div>
+        </section>
+      </main>
+    </section>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script src="js/quiz.js"></script>
 </body>
 </html>

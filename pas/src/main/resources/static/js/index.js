@@ -72,12 +72,15 @@ function joinRoom() {
     .then(data => {
       if (data.success) {
         alert("방에 참여하였습니다!");
-        localStorage.setItem(`roomPassword_${roomCode}`, roomPassword);
-        window.location.href = `room.html?code=${roomCode}`;
+
+        localStorage.setItem("roomPassword", roomPassword);
+        localStorage.setItem("loggedInUser", loggedInUser);
+    
+        window.location.href = `quiz.html?code=${roomCode}`;
       } else {
         alert("방 참여 실패: " + data.message);
       }
-    })
+    })    
     .catch(err => console.error("방 참여 오류:", err));
 }
 
@@ -102,11 +105,6 @@ function loadRooms() {
       });
     })
     .catch(err => console.error("방 목록 불러오기 오류:", err));
-}
-
-function joinRoomWithCode(code) {
-  document.getElementById("room-code").value = code;
-  joinRoom();
 }
 
 

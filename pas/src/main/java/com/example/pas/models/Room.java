@@ -14,21 +14,35 @@ public class Room {
     private String code;
     private String password;
     private String professorEmail;
-    private String imageBase64;
+
+    private String imageUrl;
+    private String imagePublicId;
+
     private Map<String, String> participants;
     private List<String> anonymousQuestions;
+    private Long endTime;
+    private Map<Integer, Map<String, Long>> submitTimes;
     private List<que> testQuestions;
+    private boolean isStarted = false;
+    private int currentQuestionIndex = 0;
+
+    private Map<String, Integer> scores;
+    private Map<String, List<Boolean>> answers;
 
     public Room() {
     }
 
-    public Room(String name, String code, String password, String professorEmail, String imageBase64) {
+    public Room(String name, String code, String password, String professorEmail, String imageUrl,
+            String imagePublicId) {
         this.name = name;
         this.code = code;
         this.password = password;
         this.professorEmail = professorEmail;
-        this.imageBase64 = imageBase64;
+        this.imageUrl = imageUrl;
+        this.imagePublicId = imagePublicId;
     }
+
+    // 기본 getter/setter
 
     public String getId() {
         return id;
@@ -50,12 +64,20 @@ public class Room {
         return professorEmail;
     }
 
-    public String getImageBase64() {
-        return imageBase64;
+    public String getImageUrl() {
+        return imageUrl;
     }
 
-    public void setImageBase64(String imageBase64) {
-        this.imageBase64 = imageBase64;
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public String getImagePublicId() {
+        return imagePublicId;
+    }
+
+    public void setImagePublicId(String imagePublicId) {
+        this.imagePublicId = imagePublicId;
     }
 
     public Map<String, String> getParticipants() {
@@ -92,5 +114,53 @@ public class Room {
         if (this.testQuestions != null) {
             this.testQuestions.add(question);
         }
+    }
+
+    public boolean isStarted() {
+        return isStarted;
+    }
+
+    public void setStarted(boolean started) {
+        isStarted = started;
+    }
+
+    public int getCurrentQuestionIndex() {
+        return currentQuestionIndex;
+    }
+
+    public void setCurrentQuestionIndex(int currentQuestionIndex) {
+        this.currentQuestionIndex = currentQuestionIndex;
+    }
+
+    public Map<String, Integer> getScores() {
+        return scores;
+    }
+
+    public void setScores(Map<String, Integer> scores) {
+        this.scores = scores;
+    }
+
+    public Map<String, List<Boolean>> getAnswers() {
+        return answers;
+    }
+
+    public void setAnswers(Map<String, List<Boolean>> answers) {
+        this.answers = answers;
+    }
+
+    public Long getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(Long endTime) {
+        this.endTime = endTime;
+    }
+
+    public Map<Integer, Map<String, Long>> getSubmitTimes() {
+        return submitTimes;
+    }
+
+    public void setSubmitTimes(Map<Integer, Map<String, Long>> submitTimes) {
+        this.submitTimes = submitTimes;
     }
 }

@@ -57,9 +57,24 @@ function renderQuestionList() {
     deleteBtn.src = "images/trash.png";
     deleteBtn.className = "delete-icon";
     deleteBtn.title = "문제 삭제";
-    deleteBtn.onclick = (e) => {
+    deleteBtn.onclick = async (e) => {
       e.stopPropagation();
       if (confirm(`문제 "${q.name || `문제 ${idx + 1}`}"을 삭제할까요?`)) {
+    
+        const publicId = questions[idx].publicId;
+        if (publicId) {
+          try {
+            await fetch("/api/upload/delete", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ publicId })
+            });
+            console.log(`Cloudinary 이미지 삭제됨: ${publicId}`);
+          } catch (err) {
+            console.error("이미지 삭제 실패:", err);
+          }
+        }
+    
         questions.splice(idx, 1);
         if (currentIndex >= idx) currentIndex--;
         if (questions.length === 0) {
@@ -71,6 +86,7 @@ function renderQuestionList() {
         if (currentIndex >= 0) loadQuestion(currentIndex);
       }
     };
+    
 
     const iconBox = document.createElement("div");
     iconBox.style.display = "flex";
@@ -109,19 +125,12 @@ function loadQuestion(index) {
     previewImg.src = q.image || "images/noimg.png";
   }
 
+  currentTemplate = (q.templateImageName || "classic.png").replace(".png", "");
+
   updateChoices();
   updateAnswerUI();
   renderPreview();
 }
-
-document.getElementById("remove-image-button").addEventListener("click", () => {
-  if (currentIndex < 0) return;
-  questions[currentIndex].image = "";
-  document.getElementById("custom-upload-button").src = "images/noimg.png";
-  renderPreview();
-  renderQuestionList();
-});
-
 
 function updateChoices() {
   const container = document.getElementById("choices-container");
@@ -262,29 +271,43 @@ function updateAnswerUI() {
   }
 }
 
-function handleImageUpload(event) {
+async function handleImageUpload(event) {
   const file = event.target.files[0];
   if (!file || currentIndex < 0) return;
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    const imageData = e.target.result;
-    questions[currentIndex].image = imageData;
 
-    const previewImg = document.getElementById("custom-upload-button");
-    if (previewImg) {
-      previewImg.src = imageData;
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const res = await fetch("/api/upload/image", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await res.json();
+    if (data.secure_url) {
+      questions[currentIndex].image = data.secure_url;
+      questions[currentIndex].publicId = data.public_id;
+
+      const previewImg = document.getElementById("custom-upload-button");
+      if (previewImg) {
+        previewImg.src = data.secure_url;
+      }
+
+      renderPreview();
+      renderQuestionList();
+    } else {
+      alert("이미지 업로드 실패: " + JSON.stringify(data));
     }
-
-    renderPreview();
-    renderQuestionList();
-  };
-  reader.readAsDataURL(file);
+  } catch (err) {
+    console.error("이미지 업로드 오류:", err);
+    alert("이미지 업로드 중 오류 발생");
+  }
 }
-
 
 function renderPreview() {
   if (currentIndex < 0) return;
   const q = questions[currentIndex];
+
   document.getElementById("preview-time").textContent = `${q.time || 30}초`;
   document.getElementById("preview-score").textContent = `배점: ${q.score || 100}점`;
   document.getElementById("preview-text").textContent = q.text;
@@ -297,27 +320,45 @@ function renderPreview() {
   container.innerHTML = "";
 
   if (q.type === "short") {
-    const answerDiv = document.createElement("div");
-    answerDiv.className = "short-answer-box";
-
-    container.appendChild(answerDiv);
-  } else {
+    const wrapper = document.createElement("div");
+    wrapper.className = "short-answer-wrapper";
+  
+    const inputBox = document.createElement("input");
+    inputBox.type = "text";
+    inputBox.placeholder = "정답을 입력하세요...";
+    inputBox.className = "short-answer-on-sentence";
+  
+    wrapper.appendChild(inputBox);
+    container.appendChild(wrapper);
+  }   
+  else {
     const grid = document.createElement("div");
     grid.className = "answer-grid";
     const choicesToRender = q.type === "ox" ? ["O", "X"] : q.choices;
+
     choicesToRender.forEach((choice, idx) => {
       const choiceDiv = document.createElement("div");
-      choiceDiv.className = "choice-box";
-      choiceDiv.style.backgroundImage = `url('images/choice${idx + 1}.png')`;
       const label = document.createElement("div");
       label.className = "choice-label";
       label.textContent = choice;
+
+      if (q.type === "ox") {
+        choiceDiv.className = "choice-box ox-choice-box";
+        choiceDiv.style.backgroundImage = `url('images/${choice.toLowerCase()}.png')`;
+        label.style.display = "none";
+      } else {
+        choiceDiv.className = "choice-box";
+        choiceDiv.style.backgroundImage = `url('images/choice${idx + 1}.png')`;
+      }
+
       choiceDiv.appendChild(label);
       grid.appendChild(choiceDiv);
     });
+
     container.appendChild(grid);
   }
 
+  // 배경 템플릿
   const previewBox = document.getElementById("preview-box");
   previewBox.style.backgroundImage = `url('/images/${currentTemplate}.png')`;
   previewBox.style.backgroundSize = "cover";
@@ -328,8 +369,12 @@ function renderPreview() {
 
 function selectTemplate(templateName) {
   currentTemplate = templateName;
+  if (currentIndex >= 0) {
+    questions[currentIndex].templateImageName = templateName + ".png";
+  }
   renderPreview();
 }
+
 
 function initDragAndDrop() {
   const listItems = document.querySelectorAll(".question-item");
@@ -386,10 +431,46 @@ function convertQuestionsToQueFormat() {
       choices: q.choices,
       correctAnswer: formattedAnswer,
       time: q.time || 30,
-      score: q.score || 100
+      score: q.score || 100,
+      templateImageName: q.templateImageName || "classic.png"
     };
   });
 }
+
+document.getElementById("remove-image-button").addEventListener("click", async () => {
+  if (currentIndex < 0) return;
+
+  const currentQuestion = questions[currentIndex];
+  const publicId = currentQuestion.publicId;
+  if (publicId) {
+    try {
+      const res = await fetch("/api/upload/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ publicId })
+      });
+      const data = await res.json();
+      console.log("Cloudinary 삭제 응답:", data);
+    } catch (err) {
+      console.error("Cloudinary 이미지 삭제 실패:", err);
+    }
+  }
+
+  currentQuestion.image = "";
+  currentQuestion.publicId = "";
+
+  const previewImg = document.getElementById("custom-upload-button");
+  if (previewImg) {
+    previewImg.src = "images/noimg.png";
+  }
+
+  renderPreview();
+  renderQuestionList();
+});
+
+
 
 document.getElementById("save-button").addEventListener("click", () => {
   const queList = convertQuestionsToQueFormat();
@@ -444,7 +525,8 @@ window.addEventListener("DOMContentLoaded", () => {
             correctAnswer: parsedAnswer,
             name: q.name || "",
             time: q.time || 30,
-            score: q.score || 100
+            score: q.score || 100,
+            templateImageName: q.templateImageName || "classic.png"
           };
         });
         currentIndex = 0;
@@ -453,4 +535,3 @@ window.addEventListener("DOMContentLoaded", () => {
       }
     })
 });
-
