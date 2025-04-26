@@ -23,7 +23,8 @@ public class Room {
     private Long endTime;
     private Map<Integer, Map<String, Long>> submitTimes;
     private List<que> testQuestions;
-    private boolean isStarted = false;
+
+    private boolean started = false;
     private int currentQuestionIndex = 0;
 
     private Map<String, Integer> scores;
@@ -41,8 +42,6 @@ public class Room {
         this.imageUrl = imageUrl;
         this.imagePublicId = imagePublicId;
     }
-
-    // 기본 getter/setter
 
     public String getId() {
         return id;
@@ -117,11 +116,11 @@ public class Room {
     }
 
     public boolean isStarted() {
-        return isStarted;
+        return started;
     }
 
     public void setStarted(boolean started) {
-        isStarted = started;
+        this.started = started;
     }
 
     public int getCurrentQuestionIndex() {

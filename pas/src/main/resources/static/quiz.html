@@ -56,7 +56,7 @@
             <div id="questionNumberBox">
               문제 <span id="questionNumber">1</span> / <span id="totalQuestions">?</span>
             </div>
-            <button id="goToFirstBtn">1번 문제로</button>
+            <button id="quizStartControlBtn">퀴즈시작</button>
           </div>
 
           <div id="templateBackground" class="template-background">
@@ -93,24 +93,46 @@
             <div id="resultModal" class="result-modal" style="display: none;">
               <div class="result-modal-content">
                 <h2>결과 보기</h2>
-
-                <div class="result-item">
-                  <strong>정답자 비율:</strong>
-                  <span id="correctRateText">-</span>
-                </div>
-
-                <div class="result-item">
-                  <strong>점수 랭킹:</strong>
-                  <ol id="scoreRankingList"></ol>
-                </div>
-
-                <div class="result-item">
-                  <strong>가장 빠르게 맞춘 TOP3:</strong>
-                  <ol id="fastestList"></ol>
-                </div>
-
                 <button id="closeResultBtn">확인</button>
-              </div>
+              
+                <!-- 제목 가로 정렬 -->
+                <div class="result-titles">
+                  <div>정답자 비율</div>
+                  <div>점수 랭킹</div>
+                  <div>가장 빠르게 맞춘 TOP3</div>
+                </div>
+              
+                <!-- 내용 가로 정렬 -->
+                <div class="result-contents">
+                  <!-- 정답자 비율 -->
+                  <div class="result-section">
+                    <span id="correctRateText">-</span>
+                    <canvas id="correctRateChart"></canvas>
+                  </div>
+              
+                  <!-- 점수 랭킹 -->
+                  <div class="result-section">
+                    <ol id="scoreRankingList"></ol>
+                    <div class="rank-podium">
+                      <img src="/images/rank.png" alt="랭킹 포디움" />
+                      <div class="rank-nickname rank-1" id="rank1Name">1등</div>
+                      <div class="rank-nickname rank-2" id="rank2Name">2등</div>
+                      <div class="rank-nickname rank-3" id="rank3Name">3등</div>
+                    </div>
+                  </div>
+              
+                  <!-- 빠르게 푼 TOP3 -->
+                  <div class="result-section">
+                    <ol id="fastestList"></ol>
+                    <div class="rank-podium">
+                      <img src="/images/rank.png" alt="랭킹 포디움" />
+                      <div class="rank-nickname rank-1" id="fast1Name">1등</div>
+                      <div class="rank-nickname rank-2" id="fast2Name">2등</div>
+                      <div class="rank-nickname rank-3" id="fast3Name">3등</div>
+                    </div>
+                  </div>
+                </div>
+              </div>              
             </div>
 
           </div>
@@ -123,5 +145,6 @@
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 <script src="js/quiz.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>

@@ -201,7 +201,25 @@ public class RoomController {
     // 퀴즈 상태 제어
     @PutMapping("/start/{code}")
     public Map<String, Object> startQuiz(@PathVariable String code) {
-        return setQuizStarted(code, Map.of("isStarted", true));
+        Optional<Room> roomOpt = roomRepository.findByCode(code);
+        if (roomOpt.isEmpty()) {
+            return Map.of("success", false, "message", "방 없음");
+        }
+
+        Room room = roomOpt.get();
+        room.setStarted(true);
+        room.setCurrentQuestionIndex(0);
+
+        List<que> questions = room.getTestQuestions();
+        if (questions != null && !questions.isEmpty()) {
+            int timeLimit = questions.get(0).getTime();
+            long endTime = System.currentTimeMillis() + timeLimit * 1000L;
+            room.setEndTime(endTime);
+        }
+
+        roomRepository.save(room);
+
+        return Map.of("success", true, "message", "퀴즈 시작", "endTime", room.getEndTime());
     }
 
     @PutMapping("/setStart/{code}")
@@ -397,6 +415,26 @@ public class RoomController {
                 "myScore", room.getScores() != null ? room.getScores().getOrDefault(userId.replace(".", "_"), 0) : 0,
                 "ranking", rankingResult,
                 "fastest", fastestResult);
+    }
+
+    @PutMapping("/reset/{code}")
+    public Map<String, Object> resetRoom(@PathVariable String code) {
+        Optional<Room> roomOpt = roomRepository.findByCode(code);
+        if (roomOpt.isEmpty()) {
+            return Map.of("success", false, "message", "방이 존재하지 않습니다.");
+        }
+
+        Room room = roomOpt.get();
+        room.setParticipants(new HashMap<>());
+        room.setScores(new HashMap<>());
+        room.setAnswers(new HashMap<>());
+        room.setCurrentQuestionIndex(0);
+        room.setStarted(false);
+        room.setEndTime(0L);
+
+        roomRepository.save(room);
+
+        return Map.of("success", true, "message", "방 데이터가 초기화되었습니다.");
     }
 
 }

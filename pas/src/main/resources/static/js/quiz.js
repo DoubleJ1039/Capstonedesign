@@ -7,6 +7,7 @@ let professorEmail = "";
 let stompClient = null;
 let timerInterval = null;
 let isTimeOver = false;
+let correctChart = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
   const params = new URLSearchParams(window.location.search);
@@ -42,8 +43,14 @@ async function fetchRoomStatus() {
   professorEmail = infoData.professorEmail;
   isHost = userEmail === professorEmail;
 
-  const nickname = infoData.participants?.[userEmail.replace(/\./g, "_")];
+  const nicknameKey = userEmail.replace(/\./g, "_");
+  const nickname = infoData.participants?.[nicknameKey];
+
   const hasConfirmedNickname = nickname && nickname.trim().length > 0;
+
+  if (hasConfirmedNickname) {
+    localStorage.setItem("nickname", nickname);
+  }
 
   if (isQuizStarted && hasConfirmedNickname) {
     currentQuestionIndex = data.currentQuestionIndex;
@@ -53,6 +60,7 @@ async function fetchRoomStatus() {
     document.getElementById("quizScreen").style.display = "none";
   }
 }
+
 
 function setupLobbyEvents() {
   document.getElementById("confirmNicknameBtn").addEventListener("click", async () => {
@@ -89,36 +97,19 @@ function setupLobbyEvents() {
     const res = await fetch(`${API_URL}/rooms/start/${roomCode}`, {
       method: "PUT"
     });
-
+  
     const data = await res.json();
     if (data.success) {
       showQuizScreen();
       sendQuestionIndex(0);
+      const now = Date.now();
+      const remainTime = Math.floor((data.endTime - now) / 1000);
+      startTimer(remainTime, data.endTime);
     } else {
       alert("퀴즈 시작에 실패했습니다.");
     }
   });
-}
-
-function showQuizScreen() {
-  document.getElementById("lobbyScreen").style.display = "none";
-  document.getElementById("quizScreen").style.display = "block";
-  renderQuestion();
-
-  const nextBtn = document.getElementById("nextQuestionBtn");
-  const firstBtn = document.getElementById("goToFirstBtn");
-  const topControls = document.getElementById("topControls");
-
-  if (isHost) {
-    nextBtn.style.display = "inline-block";
-    firstBtn.style.display = "inline-block";
-    topControls.style.display = "flex";
-    setHostEventListeners();
-  } else {
-    nextBtn.style.display = "none";
-    firstBtn.style.display = "none";
-    topControls.style.display = "none";
-  }
+  
 }
 
 function startLobbyPolling() {
@@ -287,40 +278,36 @@ function setHostEventListeners() {
     }
   });
 
-  document.getElementById("goToFirstBtn").addEventListener("click", async () => {
-    const res = await fetch(`${API_URL}/ws/questionIndex/${roomCode}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ currentQuestionIndex: 0 })
+  document.getElementById("startQuizBtn").addEventListener("click", async () => {
+    const res = await fetch(`${API_URL}/rooms/start/${roomCode}`, {
+      method: "PUT"
     });
-
+  
     const data = await res.json();
     if (data.success) {
-      currentQuestionIndex = 0;
-      renderQuestion();
+      showQuizScreen();
       sendQuestionIndex(0);
     } else {
-      alert("1번 문제로 돌아갈 수 없습니다.");
+      alert("퀴즈 시작에 실패했습니다.");
     }
   });
+  
 }
 
-  document.getElementById("goToFirstBtn").addEventListener("click", async () => {
-    const res = await fetch(`${API_URL}/rooms/updateIndex/${roomCode}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ currentQuestionIndex: 0 })
-    });
-
-    const data = await res.json();
-    if (data.success) {
-      currentQuestionIndex = 0;
-      renderQuestion();
-      sendQuestionIndex(0);
-    } else {
-      alert("1번 문제로 돌아갈 수 없습니다.");
-    }
+document.getElementById("quizStartControlBtn").addEventListener("click", async () => {
+  const res = await fetch(`${API_URL}/rooms/start/${roomCode}`, {
+    method: "PUT"
   });
+
+  const data = await res.json();
+  if (data.success) {
+    showQuizScreen();
+    sendQuestionIndex(0);
+  } else {
+    alert("퀴즈 시작에 실패했습니다.");
+  }
+});
+
 
   async function fetchRoomData() {
     const res = await fetch(`${API_URL}/rooms/info?code=${roomCode}`);
@@ -351,9 +338,11 @@ function setHostEventListeners() {
     startTimer(remainTime, data.endTime);
   }  
 
+  //웹소켓
   function connectWebSocket() {
     const socket = new SockJS("/ws");
     stompClient = Stomp.over(socket);
+  
     stompClient.connect({}, () => {
       stompClient.subscribe(`/topic/room/${roomCode}`, (message) => {
         const data = JSON.parse(message.body);
@@ -366,15 +355,26 @@ function setHostEventListeners() {
           const remainTime = Math.floor((data.endTime - now) / 1000);
           startTimer(remainTime, data.endTime);
         }
+  
         if (data.type === "showResult") {
           updateResultModal(data);
         }
+  
         if (data.type === "closeResult") {
           document.getElementById("resultModal").style.display = "none";
         }
+
+        if (data.type === "chat") {
+          const chatBox = document.getElementById("chatMessages");
+          const msgDiv = document.createElement("div");
+          msgDiv.textContent = `${data.nickname}: ${data.message}`;
+          chatBox.appendChild(msgDiv);
+          chatBox.scrollTop = chatBox.scrollHeight;
+        }
       });
     });
-  }  
+  }
+   
   
 function sendQuestionIndex(index) {
   if (stompClient && stompClient.connected) {
@@ -546,6 +546,10 @@ function enableSubmitButton() {
 // 결과 모달 업데이트 함수
 function updateResultModal(data) {
   document.getElementById("correctRateText").textContent = `${data.correctRate}%`;
+  document.getElementById("rank1Name").textContent = data.ranking[0]?.nickname || "-";
+document.getElementById("rank2Name").textContent = data.ranking[1]?.nickname || "-";
+document.getElementById("rank3Name").textContent = data.ranking[2]?.nickname || "-";
+
 
   const scoreRankingList = document.getElementById("scoreRankingList");
   scoreRankingList.innerHTML = "";
@@ -584,6 +588,42 @@ async function showResult() {
     return;
   }
   updateResultModal(data);
+
+  const correctRate = data.correctRate;
+  const totalParticipants = data.ranking.length;
+  const correctCount = Math.round((correctRate / 100) * totalParticipants);
+  const incorrectCount = totalParticipants - correctCount;
+  renderCorrectRateChart(correctCount, incorrectCount);
+
+  const chartContainer = document.getElementById("chartContainer");
+  chartContainer.innerHTML = '<canvas id="resultChart" width="400" height="200"></canvas>';
+  const ctx = document.getElementById("resultChart").getContext("2d");
+
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: ["정답자", "오답자"],
+      datasets: [{
+        label: "응답 수",
+        data: [correctCount, incorrectCount],
+        backgroundColor: ["#4CAF50", "#F44336"]
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1
+          }
+        }
+      }
+    }
+  });
   if (isHost && stompClient) {
     stompClient.send(`/app/room/${roomCode}/showResult`, {}, JSON.stringify({
       type: "showResult",
@@ -597,21 +637,50 @@ async function showResult() {
   }
 }
 
+//정답자 그래프 생성
+function renderCorrectRateChart(correctCount, wrongCount) {
+  const ctx = document.getElementById("correctRateChart").getContext("2d");
 
-//결과 화면
+  if (correctChart) {
+    correctChart.destroy();
+  }
+
+  correctChart = new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels: ["정답자", "오답자"],
+      datasets: [{
+        data: [correctCount, wrongCount],
+        backgroundColor: ["#4CAF50", "#F44336"],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: "bottom"
+        }
+      }
+    }
+  });
+}
+
+//상단 버튼
 function showQuizScreen() {
   document.getElementById("lobbyScreen").style.display = "none";
   document.getElementById("quizScreen").style.display = "block";
   renderQuestion();
 
   const nextBtn = document.getElementById("nextQuestionBtn");
-  const firstBtn = document.getElementById("goToFirstBtn");
+  const startBtn = document.getElementById("quizStartControlBtn");
   const resultBtn = document.getElementById("showResultBtn");
   const topControls = document.getElementById("topControls");
 
   if (isHost) {
     nextBtn.style.display = "none";
-    firstBtn.style.display = "inline-block";
+    startBtn.style.display = "inline-block";
     resultBtn.style.display = "inline-block";
     topControls.style.display = "flex";
     setHostEventListeners();
@@ -619,10 +688,9 @@ function showQuizScreen() {
       await showResult();
       resultBtn.style.display = "none";
     });
-
   } else {
     nextBtn.style.display = "none";
-    firstBtn.style.display = "none";
+    startBtn.style.display = "none";
     resultBtn.style.display = "none";
     topControls.style.display = "none";
   }
@@ -637,5 +705,57 @@ document.getElementById("closeResultBtn").addEventListener("click", () => {
       type: "closeResult"
     }));
     document.getElementById("nextQuestionBtn").style.display = "inline-block";
+  }
+});
+
+//채팅전송
+document.getElementById("sendChatBtn").addEventListener("click", () => {
+  const messageInput = document.getElementById("chatInput");
+  const message = messageInput.value.trim();
+  const nickname = localStorage.getItem("nickname") || "익명";
+
+  if (!message) return;
+
+  stompClient.send(`/app/room/${roomCode}/sendChat`, {}, JSON.stringify({
+    nickname,
+    message
+  }));
+
+  messageInput.value = "";
+});
+
+//익명 채팅
+function appendChatMessage(nickname, message, isMe = false) {
+  const chatMessages = document.getElementById("chatMessages");
+  const msgDiv = document.createElement("div");
+  msgDiv.classList.add("chat-message");
+  if (isMe) msgDiv.classList.add("me");
+
+  msgDiv.innerHTML = `<strong>${nickname}</strong><br>${message}`;
+  chatMessages.appendChild(msgDiv);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// 채팅 전송 함수
+const messageInput = document.getElementById("chatInput");
+const sendChatBtn = document.getElementById("sendChatBtn");
+function sendChatMessage() {
+  const message = messageInput.value.trim();
+  const nickname = localStorage.getItem("nickname") || "익명";
+
+  if (!message) return;
+
+  stompClient.send(`/app/room/${roomCode}/sendChat`, {}, JSON.stringify({
+    nickname,
+    message
+  }));
+
+  messageInput.value = "";
+}
+sendChatBtn.addEventListener("click", sendChatMessage);
+messageInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendChatMessage();
   }
 });

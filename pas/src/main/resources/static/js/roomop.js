@@ -23,6 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
     imageInput.addEventListener("change", handleImageChange);
 });
 
+//이미지 변환
 async function handleImageChange(e) {
     const file = e.target.files[0];
     if (!file || !currentImageTargetCode) return;
@@ -62,12 +63,14 @@ async function handleImageChange(e) {
     }
 }
 
+//로그아웃 버튼
 function handleLogout() {
     localStorage.removeItem("loggedInUser");
     alert("로그아웃되었습니다.");
     window.location.href = "login.html";
 }
 
+//방 만들기
 function createRoom() {
     const roomName = document.getElementById("room-name").value.trim();
     const roomPassword = document.getElementById("room-password").value.trim();
@@ -95,6 +98,7 @@ function createRoom() {
     .catch(error => console.error("방 생성 오류:", error));
 }
 
+//방 정보 불러오기
 function loadRooms(loggedInUser) {
     fetch(`${API_URL}/rooms/list`)
         .then(response => response.json())
@@ -167,25 +171,22 @@ function loadRooms(loggedInUser) {
                 };
 
                 const quizStateBtn = document.createElement("button");
-                if (room.started) {
-                    quizStateBtn.textContent = "퀴즈 종료";
+                    quizStateBtn.textContent = "퀴즈 리셋";
                     quizStateBtn.onclick = async (event) => {
-                        event.stopPropagation();
-                        const res = await fetch(`${API_URL}/rooms/setStart/${room.code}`, {
-                            method: "PUT",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ isStarted: false })
-                        });
-                        const data = await res.json();
-                        if (data.success) {
-                            alert("퀴즈가 종료되었습니다.");
-                            loadRooms(loggedInUser);
-                        }
-                    };
-                } else {
-                    quizStateBtn.textContent = "대기중";
-                    quizStateBtn.disabled = true;
-                }
+                       event.stopPropagation();
+                       if (confirm("정말 이 방을 초기화하시겠습니까?")) {
+                         const res = await fetch(`${API_URL}/rooms/reset/${room.code}`, {
+                                method: "PUT"
+                           });
+                           const data = await res.json();
+                          if (data.success) {
+                              alert("방 데이터가 초기화되었습니다.");
+                              loadRooms(loggedInUser);
+                          } else {
+                              alert("초기화 실패: " + data.message);
+                          }
+                     }
+                };
 
                 btnGroup.appendChild(imageBtn);
                 btnGroup.appendChild(qrBtn);
@@ -205,6 +206,7 @@ function loadRooms(loggedInUser) {
         .catch(error => console.error("방 목록 불러오기 오류:", error));
 }
 
+//방 삭제버튼
 function deleteRoom(code, publicId) {
     if (!confirm("정말 이 방을 삭제하시겠습니까?")) return;
     if (publicId) {
@@ -260,3 +262,4 @@ function showQRCode(roomCode) {
         }
     };
 }
+
