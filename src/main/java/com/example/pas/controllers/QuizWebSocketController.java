@@ -60,6 +60,31 @@ public class QuizWebSocketController {
         return Map.of("success", true, "message", "문제 번호 전송 완료");
     }
 
+    // 퀴즈 시작 알림 전송
+    @MessageMapping("/room/{code}/startQuiz")
+    public void startQuiz(@DestinationVariable String code) {
+        Optional<Room> roomOpt = roomRepository.findByCode(code);
+        if (roomOpt.isEmpty())
+            return;
+
+        Room room = roomOpt.get();
+        int index = room.getCurrentQuestionIndex();
+
+        long timeLimitMillis = 30 * 1000L;
+        if (room.getTestQuestions() != null && room.getTestQuestions().size() > index) {
+            timeLimitMillis = room.getTestQuestions().get(index).getTime() * 1000L;
+        }
+
+        long endTime = System.currentTimeMillis() + timeLimitMillis;
+        room.setEndTime(endTime);
+        roomRepository.save(room);
+
+        messagingTemplate.convertAndSend("/topic/room/" + code, Map.of(
+                "type", "startQuiz",
+                "currentQuestionIndex", index,
+                "endTime", endTime));
+    }
+
     // WebSocket 메시지로 문제 번호 전송 요청
     @MessageMapping("/room/{code}/sendIndex")
     public void sendQuestionIndex(@DestinationVariable String code, @Payload Map<String, Object> payload) {

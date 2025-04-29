@@ -97,19 +97,14 @@
               
                 <!-- 제목 가로 정렬 -->
                 <div class="result-titles">
-                  <div>정답자 비율</div>
                   <div>점수 랭킹</div>
+                  <div>정답자 비율</div>
                   <div>가장 빠르게 맞춘 TOP3</div>
                 </div>
               
                 <!-- 내용 가로 정렬 -->
                 <div class="result-contents">
-                  <!-- 정답자 비율 -->
-                  <div class="result-section">
-                    <span id="correctRateText">-</span>
-                    <canvas id="correctRateChart"></canvas>
-                  </div>
-              
+
                   <!-- 점수 랭킹 -->
                   <div class="result-section">
                     <ol id="scoreRankingList"></ol>
@@ -119,6 +114,12 @@
                       <div class="rank-nickname rank-2" id="rank2Name">2등</div>
                       <div class="rank-nickname rank-3" id="rank3Name">3등</div>
                     </div>
+                  </div>
+                  
+                  <!-- 정답자 비율 -->
+                  <div class="result-section">
+                    <span id="correctRateText">-</span>
+                    <canvas id="correctRateChart"></canvas>
                   </div>
               
                   <!-- 빠르게 푼 TOP3 -->

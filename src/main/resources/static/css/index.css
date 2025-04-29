@@ -89,6 +89,7 @@ main {
 #room-list {
   width: 350px;
   min-width: 300px;
+  height : 250px;
   background-color: #FFF9C4;
   border-radius: 12px;
   padding: 20px;
@@ -221,6 +222,49 @@ button:hover {
 }
 .carousel-button.next {
   right: +5px;
+}
+
+/* 푸터*/
+.site-footer {
+  margin-top: 80px;
+  background-color: #f0f0f0;
+  color: #555;
+  padding: 40px 20px;
+  font-size: 14px;
+  border-top: 1px solid #ccc;
+}
+
+.footer-content {
+  max-width: 1000px;
+  margin: 0 auto;
+  text-align: center;
+  line-height: 1.8;
+}
+
+.footer-text {
+  margin: 8px 0;
+}
+
+.footer-text.email::before {
+  content: "✉️ ";
+}
+
+.footer-icons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+
+.footer-icons img {
+  width: 60px;
+  height: 60px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.footer-icons img:hover {
+  transform: scale(1.1);
 }
 
 /* 반응형 */
