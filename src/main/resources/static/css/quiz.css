@@ -252,6 +252,10 @@ html, body {
   overflow: hidden;
   line-height: 1.3;
   max-height: 2.6em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: keep-all;
 }
 
 .choice-item:hover {
@@ -326,7 +330,6 @@ html, body {
   color: #aaa;
   text-align: center;
 }
-
 
 .sentence-image {
   width: 400px;
@@ -404,6 +407,12 @@ html, body {
 #participantsList li {
   font-size: 16px;
   padding: 4px 0;
+}
+
+.submit-button-wrapper {
+  position: relative;
+  margin-top: 31px;
+  padding-bottom: 80px;
 }
 
 .submit-btn {
@@ -499,7 +508,6 @@ html, body {
 .rank-2 { top: 60px; left: 20px; }
 .rank-3 { top: 80px; left: 200px; }
 
-
 canvas {
   pointer-events: none;
 }
@@ -512,4 +520,187 @@ canvas {
   border: none;
   cursor: pointer;
   z-index: 10;
+}
+
+/* 모바일 반응형 스타일 */
+@media screen and (max-width: 768px) {
+  .quiz-container {
+    flex-direction: column;
+  }
+
+  .left-panel {
+    width: 100%;
+    height: 200px;
+    border-right: none;
+    border-bottom: 2px solid #ddd;
+  }
+
+  .right-panel {
+    height: calc(100vh - 200px);
+  }
+
+  #questionText {
+    font-size: 24px;
+  }
+
+  .question-image-box {
+    height: 200px;
+    gap: 20px;
+  }
+
+  #questionImage {
+    width: 100%;
+    height: 200px;
+    margin-left: 0;
+  }
+
+  #timerBox {
+    width: 60px;
+    height: 60px;
+    font-size: 16px;
+  }
+
+  .choices-list {
+    grid-gap: 15px;
+    margin-top: 0.5cm;
+    padding: 0 10px;
+  }
+
+  .choice-item {
+    width: 100%;
+    height: auto;
+    min-height: 80px;
+    font-size: 16px;
+    padding: 10px;
+  }
+
+  .choice-text {
+    margin-left: 50px;
+    width: calc(100% - 60px);
+    font-size: 14px;
+    line-height: 1.4;
+    max-height: none;
+    -webkit-line-clamp: 3;
+    padding: 5px 0;
+  }
+
+  .choice-item.selected::after {
+    top: 15px;
+    left: 15px;
+    width: 30px;
+    height: 30px;
+  }
+
+  .choices-container {
+    margin-top: 10px;
+    padding: 0 10px;
+  }
+
+  .chat-messages {
+    font-size: 12px;
+  }
+
+  .chat-input-box {
+    padding: 4px;
+  }
+
+  #sendChatBtn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .result-modal-content {
+    width: 90%;
+    max-height: 90vh;
+    padding: 15px;
+  }
+
+  .result-titles {
+    font-size: 14px;
+  }
+
+  .rank-podium img {
+    width: 200px;
+  }
+
+  .rank-nickname {
+    font-size: 12px;
+  }
+
+  .rank-1 { top: 10px; left: 55px; }
+  .rank-2 { top: 30px; left: 10px; }
+  .rank-3 { top: 40px; left: 100px; }
+
+  .sentence-box {
+    width: 90%;
+    height: 100px;
+    margin: 1cm auto 0 auto;
+  }
+
+  .sentence-input {
+    font-size: 16px;
+    padding: 10px;
+  }
+
+  .sentence-input::placeholder {
+    font-size: 14px;
+  }
+
+  .submit-button-wrapper {
+    margin-top: 20px;
+    padding-bottom: 100px;
+  }
+
+  .submit-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 300px;
+    padding: 15px;
+    font-size: 16px;
+    border-radius: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  }
+
+  .short-answer-box {
+    margin-bottom: 80px;
+  }
+
+  .short-answer-box textarea {
+    width: 90%;
+    height: 100px;
+    margin: 0 auto;
+    display: block;
+    padding: 10px;
+    font-size: 16px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    resize: none;
+  }
+}
+
+/* 태블릿 반응형 스타일 */
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+  .left-panel {
+    width: 250px;
+  }
+
+  #questionText {
+    font-size: 36px;
+  }
+
+  .question-image-box {
+    height: 300px;
+  }
+
+  #questionImage {
+    width: 400px;
+    height: 300px;
+  }
+
+  .choice-item {
+    width: 300px;
+  }
 }
