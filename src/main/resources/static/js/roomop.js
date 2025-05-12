@@ -243,7 +243,7 @@ function showQRCode(roomCode) {
     const roomCodeText = document.getElementById("roomCodeText");
 
     const qr = qrcode(0, 'M');
-    qr.addData(`${window.location.origin}/index.html?code=${roomCode}`);
+    qr.addData(`${window.location.origin}/quiz.html?code=${roomCode}`);
     qr.make();
 
     qrCodeDiv.innerHTML = qr.createImgTag(8);
