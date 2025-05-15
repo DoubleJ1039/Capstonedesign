@@ -38,7 +38,8 @@
         <p>방 코드: <span id="roomCode">----</span></p>
       </div>
 
-      <div class="chat-box">
+      <!-- 데스크탑 채팅창 -->
+      <div class="chat-box desktop-chat">
         <div class="chat-messages" id="chatMessages"></div>
         <div class="chat-input-box">
           <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." />
@@ -98,17 +99,13 @@
                 <h2>결과 보기</h2>
                 <button id="closeResultBtn">확인</button>
               
-                <!-- 제목 가로 정렬 -->
                 <div class="result-titles">
                   <div>점수 랭킹</div>
                   <div>정답자 비율</div>
                   <div>가장 빠르게 맞춘 TOP3</div>
                 </div>
               
-                <!-- 내용 가로 정렬 -->
                 <div class="result-contents">
-
-                  <!-- 점수 랭킹 -->
                   <div class="result-section">
                     <ol id="scoreRankingList"></ol>
                     <div class="rank-podium">
@@ -118,14 +115,10 @@
                       <div class="rank-nickname rank-3" id="rank3Name">3등</div>
                     </div>
                   </div>
-                  
-                  <!-- 정답자 비율 -->
                   <div class="result-section">
                     <span id="correctRateText">-</span>
                     <canvas id="correctRateChart"></canvas>
                   </div>
-              
-                  <!-- 빠르게 푼 TOP3 -->
                   <div class="result-section">
                     <ol id="fastestList"></ol>
                     <div class="rank-podium">
@@ -144,6 +137,23 @@
       </main>
     </section>
   </div>
+
+  <!-- 모바일용 채팅 열기 버튼 -->
+  <button id="mobileChatBtn" class="mobile-chat-toggle">💬</button>
+
+  <!-- 모바일용 채팅 팝업 -->
+  <div id="mobileChatPopup" class="mobile-chat-popup">
+    <div class="chat-header">
+      <span>채팅</span>
+      <button id="closeMobileChat">✕</button>
+    </div>
+    <div class="chat-messages" id="mobileChatMessages"></div>
+    <div class="chat-input-box">
+      <input type="text" id="mobileChatInput" placeholder="메시지를 입력하세요..." />
+      <button id="sendMobileChatBtn">전송</button>
+    </div>
+  </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>

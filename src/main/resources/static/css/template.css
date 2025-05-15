@@ -93,8 +93,8 @@ body {
 }
 
 #preview-box {
-  width: 1200px;
-  height: 900px;
+  width: 1050px;
+  height: 820px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -102,7 +102,7 @@ body {
   border: 1px solid #ccc;
   padding: 40px 30px;
   border-radius: 12px;
-  overflow: auto;
+  overflow: hidden;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -115,7 +115,7 @@ body {
 .preview-question-wrapper {
   position: relative;
   width: 100%;
-  max-width: 800px;
+  max-width: 1050px;
   margin-bottom: 20px;
 }
 

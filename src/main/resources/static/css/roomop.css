@@ -20,7 +20,6 @@ body {
     margin-left: 100px;
   }
   
-  
   .nav-logo a {
     font-size: 24px;
     font-weight: bold;
@@ -234,30 +233,88 @@ body {
       font-size: 16px;
       color: #666;
     }
-  
+
+    .nav-toggle {
+  display: none;
+}
   
   /* 반응형 */
   @media (max-width: 768px) {
-    .nav-menu {
-      display: none;
-    }
-  
-    .nav-actions {
-      flex-direction: column;
-      gap: 5px;
-    }
-  
-    .room-grid {
-      grid-template-columns: 1fr;
-    }
-  
-    button {
-      width: 100%;
-    }
-  
-    input[type="text"],
-    input[type="password"] {
-      width: 100%;
-    }
+  .navbar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 8px 10px;
+    flex-wrap: wrap;
   }
+
+  .nav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .nav-logo a {
+    margin-left: 0 !important;
+    font-size: 20px;
+  }
+
+  .nav-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .nav-toggle {
+    display: block;
+    width: auto !important;
+    margin-left: auto;
+    padding: 0;
+    background: none;
+    font-size: 30px;
+    border: none;
+    cursor: pointer;
+    color: black;
+  }
+
+  .nav-center {
+    flex: 0 !important;
+    display: none !important;
+    flex-direction: column;
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .nav-center.active {
+    display: flex !important;
+  }
+
+  .nav-menu {
+    flex-direction: column;
+    gap: 10px;
+    padding-left: 0;
+  }
+
+  .nav-menu li a {
+    padding: 8px;
+    display: block;
+  }
+
+  .nav-actions {
+    display: none;
+  }
+
+  .room-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  button {
+    width: 100%;
+  }
+  
+  input[type="text"],
+  input[type="password"] {
+    width: 100%;
+  }
+}
   

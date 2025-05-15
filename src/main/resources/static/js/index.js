@@ -19,19 +19,31 @@ document.addEventListener("DOMContentLoaded", () => {
 /* ----- 인증/로그인 관련 기존 코드 ----- */
 function initAuth() {
   const authButton = document.getElementById("authButton");
+  const mobileAuthButton = document.getElementById("mobileAuthButton");
   const userGreeting = document.getElementById("userGreeting");
+  const loginTextButton = document.getElementById("loginTextButton");
   const loggedInUser = localStorage.getItem("loggedInUser");
 
   if (loggedInUser) {
     authButton.textContent = "로그아웃";
+    mobileAuthButton.textContent = "로그아웃";
     authButton.className = "logout-btn";
     userGreeting.textContent = `안녕하세요 ${loggedInUser} 님`;
+    loginTextButton.style.display = "none";
   } else {
     authButton.textContent = "로그인";
+    mobileAuthButton.textContent = "로그인";
     authButton.className = "login-btn";
     userGreeting.textContent = "";
+
+    if (window.innerWidth <= 768) {
+      loginTextButton.style.display = "inline-block";
+    } else {
+      loginTextButton.style.display = "none";
+    }
   }
 }
+
 
 function handleAuth() {
   const loggedInUser = localStorage.getItem("loggedInUser");
@@ -167,4 +179,9 @@ function rotateArray(arr, centerIndex) {
   return arr.map((_, i) => {
     return arr[(i - shift + len) % len];
   });
+}
+
+function toggleMobileMenu() {
+  const menu = document.getElementById('mobileMenu');
+  menu.classList.toggle('active');
 }

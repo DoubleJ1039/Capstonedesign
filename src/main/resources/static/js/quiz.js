@@ -342,69 +342,84 @@ document.getElementById("quizStartControlBtn").addEventListener("click", async (
     startTimer(remainTime, data.endTime);
   }  
 
-  function connectWebSocket() {
-    const socket = new SockJS("/ws");
-    stompClient = Stomp.over(socket);
-  
-    stompClient.connect({}, async () => {
-      console.log("[WebSocket] Connected!");
-      const statusRes = await fetch(`${API_URL}/rooms/status?code=${roomCode}`);
-      const statusData = await statusRes.json();
-      const infoRes = await fetch(`${API_URL}/rooms/info?code=${roomCode}`);
-      const infoData = await infoRes.json();
-      const userEmail = localStorage.getItem("loggedInUser");
-      const nicknameKey = userEmail.replace(/\./g, "_");
-      const nickname = infoData.participants?.[nicknameKey];
-      const hasConfirmedNickname = nickname && nickname.trim().length > 0;
-  
-      if (statusData.isStarted && hasConfirmedNickname) {
-        console.log("[WebSocket] 퀴즈가 이미 시작됨 → showQuizScreen 실행");
-        currentQuestionIndex = statusData.currentQuestionIndex;
+function connectWebSocket() {
+  const socket = new SockJS("/ws");
+  stompClient = Stomp.over(socket);
+
+  stompClient.connect({}, async () => {
+    console.log("[WebSocket] Connected!");
+
+    const statusRes = await fetch(`${API_URL}/rooms/status?code=${roomCode}`);
+    const statusData = await statusRes.json();
+    const infoRes = await fetch(`${API_URL}/rooms/info?code=${roomCode}`);
+    const infoData = await infoRes.json();
+
+    const userEmail = localStorage.getItem("loggedInUser");
+    const nicknameKey = userEmail.replace(/\./g, "_");
+    const nickname = infoData.participants?.[nicknameKey];
+    const hasConfirmedNickname = nickname && nickname.trim().length > 0;
+
+    if (statusData.isStarted && hasConfirmedNickname) {
+      console.log("[WebSocket] 퀴즈가 이미 시작됨 → showQuizScreen 실행");
+      currentQuestionIndex = statusData.currentQuestionIndex;
+      showQuizScreen();
+    }
+
+    stompClient.subscribe(`/topic/room/${roomCode}`, (message) => {
+      const data = JSON.parse(message.body);
+      console.log("[WebSocket] 수신됨:", data);
+
+      if (data.type === "startQuiz") {
+        currentQuestionIndex = data.currentQuestionIndex || 0;
         showQuizScreen();
+
+        const now = Date.now();
+        const remainTime = Math.floor((data.endTime - now) / 1000);
+        startTimer(remainTime, data.endTime);
       }
 
-      stompClient.subscribe(`/topic/room/${roomCode}`, (message) => {
-        const data = JSON.parse(message.body);
-        console.log("[WebSocket] 수신됨:", data);
-  
-        if (data.type === "startQuiz") {
-          currentQuestionIndex = data.currentQuestionIndex || 0;
-          showQuizScreen();
+      if (data.type === "questionIndex") {
+        currentQuestionIndex = data.currentQuestionIndex;
+        renderQuestion();
 
-          const now = Date.now();
-          const remainTime = Math.floor((data.endTime - now) / 1000);
-          startTimer(remainTime, data.endTime);
-        }
+        const now = Date.now();
+        const remainTime = Math.floor((data.endTime - now) / 1000);
+        startTimer(remainTime, data.endTime);
+      }
 
-  
-        if (data.type === "questionIndex") {
-          currentQuestionIndex = data.currentQuestionIndex;
-          renderQuestion();
-  
-          const now = Date.now();
-          const remainTime = Math.floor((data.endTime - now) / 1000);
-          startTimer(remainTime, data.endTime);
+      if (data.type === "showResult") {
+        updateResultModal(data);
+      }
+
+      if (data.type === "closeResult") {
+        document.getElementById("resultModal").style.display = "none";
+      }
+
+      if (data.type === "chat") {
+        const nickname = data.nickname;
+        const message = data.message;
+
+        // 데스크탑 채팅창
+        const chatBox = document.getElementById("chatMessages");
+        const msgDiv = document.createElement("div");
+        msgDiv.classList.add("chat-message");
+        msgDiv.innerHTML = `<strong>${nickname}</strong><br>${message}`;
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        // 모바일 채팅창
+        const mobileBox = document.getElementById("mobileChatMessages");
+        if (mobileBox) {
+          const mobileMsg = document.createElement("div");
+          mobileMsg.classList.add("chat-message");
+          mobileMsg.innerHTML = `<strong>${nickname}</strong><br>${message}`;
+          mobileBox.appendChild(mobileMsg);
+          mobileBox.scrollTop = mobileBox.scrollHeight;
         }
-  
-        if (data.type === "showResult") {
-          updateResultModal(data);
-        }
-  
-        if (data.type === "closeResult") {
-          document.getElementById("resultModal").style.display = "none";
-        }
-  
-        if (data.type === "chat") {
-          const chatBox = document.getElementById("chatMessages");
-          const msgDiv = document.createElement("div");
-          msgDiv.textContent = `${data.nickname}: ${data.message}`;
-          chatBox.appendChild(msgDiv);
-          chatBox.scrollTop = chatBox.scrollHeight;
-        }
-      });
+      }
     });
-  }  
-  
+  });
+}
   
 function sendQuestionIndex(index) {
   if (stompClient && stompClient.connected) {
@@ -821,5 +836,48 @@ messageInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
     sendChatMessage();
+  }
+});
+
+// 모바일 채팅 팝업 토글 로직
+const mobileChatBtn = document.getElementById("mobileChatBtn");
+const mobileChatPopup = document.getElementById("mobileChatPopup");
+const closeMobileChat = document.getElementById("closeMobileChat");
+
+if (mobileChatBtn && mobileChatPopup) {
+  mobileChatBtn.addEventListener("click", () => {
+    mobileChatPopup.style.display = "flex";
+  });
+}
+
+if (closeMobileChat) {
+  closeMobileChat.addEventListener("click", () => {
+    mobileChatPopup.style.display = "none";
+  });
+}
+
+// 모바일 채팅 전송 버튼 처리
+const mobileChatInput = document.getElementById("mobileChatInput");
+const sendMobileChatBtn = document.getElementById("sendMobileChatBtn");
+
+function sendMobileChat() {
+  const message = mobileChatInput.value.trim();
+  const nickname = localStorage.getItem("nickname") || "익명";
+
+  if (!message) return;
+
+  stompClient.send(`/app/room/${roomCode}/sendChat`, {}, JSON.stringify({
+    nickname,
+    message
+  }));
+
+  mobileChatInput.value = "";
+}
+
+sendMobileChatBtn?.addEventListener("click", sendMobileChat);
+mobileChatInput?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMobileChat();
   }
 });

@@ -1,80 +1,93 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>방 참여 시스템</title>
-    <link rel="stylesheet" href="css/index.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>방 참여 시스템</title>
+  <link rel="stylesheet" href="css/index.css" />
 </head>
 <body>
 
-    <!-- 네비게이션 바 -->
-    <div class="navbar">
-        <div class="nav-logo">
-            <a href="index.html">SPAS</a>
-        </div>
-        <div class="nav-center">
-            <ul class="nav-menu">
-                <li><a href="roomop.html">방 설정</a></li>
-                <li><a href="#">추가</a></li>
-                <li><a href="#">추가</a></li>
-                <li><a href="#">추가</a></li>
-            </ul>
-        </div>
-        <div class="nav-actions">
-            <span id="userGreeting">안녕하세요, 사용자가름</span>
-            <button id="authButton" onclick="handleAuth()">로그아웃</button>
+  <!-- 네비게이션 바 -->
+  <div class="navbar">
+    <div class="nav-header">
+      <div class="nav-logo">
+        <a href="index.html">SPAS</a>
+      </div>
+        <div class="nav-controls">
+          <button id="loginTextButton" onclick="handleAuth()" class="mobile-only">login</button>
+          <button class="nav-toggle" onclick="toggleMobileMenu()">☰</button>
         </div>
     </div>
 
-    <!-- 캐러셀 -->
-    <div class="carousel-container">
-        <div class="carousel-track" id="carousel-track">
-        </div>
-        <button class="carousel-button prev">&lt;</button>
-        <button class="carousel-button next">&gt;</button>        
+    <!-- 메뉴 영역 -->
+    <div class="nav-center" id="mobileMenu">
+      <ul class="nav-menu">
+        <li><a href="roomop.html">방 설정</a></li>
+        <li><a href="#">추가</a></li>
+        <li><a href="#">추가</a></li>
+        <li><a href="#">추가</a></li>
+
+        <!-- 모바일 전용 로그인/로그아웃 버튼 -->
+        <li class="mobile-auth">
+          <button id="mobileAuthButton" onclick="handleAuth()">로그아웃</button>
+        </li>
+      </ul>
     </div>
-      
-    <!-- 메인 -->
-    <main>
-      <div class="main-sections">
-        <section id="room-section">
-          <h2>방 참여</h2>
-          <input type="text" id="room-code" placeholder="방 코드 입력" />
-          <input type="password" id="room-password" placeholder="비밀번호 입력" />
-          <button id="joinButton" onclick="joinRoom()">참여하기</button>
-        </section>
 
-        <section id="room-list">
-          <h2>최근 생성된 방</h2>
-          <ul id="rooms"></ul>
-        </section>
-      </div>
-    </main>
+    <!-- 데스크톱 전용 로그인/로그아웃 버튼 -->
+    <div class="nav-actions">
+      <span id="userGreeting">안녕하세요, 사용자가름</span>
+      <button id="authButton" onclick="handleAuth()">로그아웃</button>
+    </div>
+  </div>
 
-    <!-- 푸터 -->
-    <<footer class="site-footer">
-      <!-- 👇 이미지 링크 영역 -->
-      <div class="footer-icons">
-        <a href="https://discord.com/users/" target="_blank">
-          <img src="images/discord.png" alt="Discord" />
-        </a>
-        <a href="https://open.kakao.com/o/" target="_blank">
-          <img src="images/kakao.png" alt="Kakao" />
-        </a>
-        <a href="mailto:payaduck@naver.com">
-          <img src="images/mail.png" alt="Email" />
-        </a>
-      </div>
+  <!-- 캐러셀 -->
+  <div class="carousel-container">
+    <div class="carousel-track" id="carousel-track">
+    </div>
+    <button class="carousel-button prev">&lt;</button>
+    <button class="carousel-button next">&gt;</button>        
+  </div>
     
-      <!-- 기존 텍스트 내용 -->
-      <div class="footer-content">
-        <p class="footer-text">© 2025 SPAS. All rights reserved.</p>
-        <p class="footer-text">개발 및 제작: 심지용, 박정재, 최건위, 심하경, 신동윤</p>
-      </div>
-    </footer>
-    
+  <!-- 메인 -->
+  <main>
+    <div class="main-sections">
+      <section id="room-section">
+        <h2>방 참여</h2>
+        <input type="text" id="room-code" placeholder="방 코드 입력" />
+        <input type="password" id="room-password" placeholder="비밀번호 입력" />
+        <button id="joinButton" onclick="joinRoom()">참여하기</button>
+      </section>
 
-    <script src="js/index.js"></script>
+      <section id="room-list">
+        <h2>최근 생성된 방</h2>
+        <ul id="rooms"></ul>
+      </section>
+    </div>
+  </main>
+
+  <!-- 푸터 -->
+  <footer class="site-footer">
+    <div class="footer-icons">
+      <a href="https://discord.com/users/" target="_blank">
+        <img src="images/discord.png" alt="Discord" />
+      </a>
+      <a href="https://open.kakao.com/o/" target="_blank">
+        <img src="images/kakao.png" alt="Kakao" />
+      </a>
+      <a href="mailto:payaduck@naver.com">
+        <img src="images/mail.png" alt="Email" />
+      </a>
+    </div>
+
+    <div class="footer-content">
+      <p class="footer-text">© 2025 SPAS. All rights reserved.</p>
+      <p class="footer-text">개발 및 제작: 심지용, 박정재, 최건위, 심하경, 신동윤</p>
+    </div>
+  </footer>
+
+  <!-- 외부 JS 파일 -->
+  <script src="js/index.js"></script>
 </body>
 </html>
