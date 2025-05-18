@@ -55,6 +55,7 @@
 
           <!-- 문제 컨트롤 버튼 -->
           <div id="topControls" class="top-controls-inside" style="display: none;">
+            <button id="exitQuizBtn" class="exit-btn">퀴즈 나가기</button>
             <button id="nextQuestionBtn" style="display: none;">다음 문제 →</button>
             <button id="showResultBtn" style="display: none;">결과 보기</button>
             <div id="questionNumberBox">
@@ -98,34 +99,51 @@
               <div class="result-modal-content">
                 <h2>결과 보기</h2>
                 <button id="closeResultBtn">확인</button>
-              
+
+                <!-- 제목 가로 정렬 -->
                 <div class="result-titles">
                   <div>점수 랭킹</div>
                   <div>정답자 비율</div>
                   <div>가장 빠르게 맞춘 TOP3</div>
                 </div>
-              
+
+                <!-- 슬라이드 컨트롤 버튼 -->
+                <div class="slide-controls">
+                  <button id="prevSlideBtn" class="slide-btn">←</button>
+                  <button id="nextSlideBtn" class="slide-btn">→</button>
+                </div>
+
+                <!-- 결과 콘텐츠 -->
                 <div class="result-contents">
+
+                  <!-- 점수 랭킹 -->
                   <div class="result-section">
+                    <h3>점수 랭킹</h3>
                     <ol id="scoreRankingList"></ol>
-                    <div class="rank-podium">
-                      <img src="/images/rank.png" alt="랭킹 포디움" />
-                      <div class="rank-nickname rank-1" id="rank1Name">1등</div>
-                      <div class="rank-nickname rank-2" id="rank2Name">2등</div>
-                      <div class="rank-nickname rank-3" id="rank3Name">3등</div>
+                    <canvas id="scorePodiumChart"></canvas>
+                    <div class="podium-names">
+                      <div id="podium1Name" class="podium-label">-</div>
+                      <div id="podium2Name" class="podium-label">-</div>
+                      <div id="podium3Name" class="podium-label">-</div>
                     </div>
                   </div>
+
+                  <!-- 정답자 비율 -->
                   <div class="result-section">
+                    <h3>정답자 비율</h3>
                     <span id="correctRateText">-</span>
                     <canvas id="correctRateChart"></canvas>
                   </div>
+
+                  <!-- 빠르게 푼 TOP3 -->
                   <div class="result-section">
+                    <h3>빠른 정답 Top3</h3>
                     <ol id="fastestList"></ol>
-                    <div class="rank-podium">
-                      <img src="/images/rank.png" alt="랭킹 포디움" />
-                      <div class="rank-nickname rank-1" id="fast1Name">1등</div>
-                      <div class="rank-nickname rank-2" id="fast2Name">2등</div>
-                      <div class="rank-nickname rank-3" id="fast3Name">3등</div>
+                    <canvas id="fastPodiumChart"></canvas>
+                    <div class="podium-names">
+                      <div id="fast1Name" class="podium-label">-</div>
+                      <div id="fast2Name" class="podium-label">-</div>
+                      <div id="fast3Name" class="podium-label">-</div>
                     </div>
                   </div>
                 </div>
@@ -138,10 +156,10 @@
     </section>
   </div>
 
-  <!-- 모바일용 채팅 열기 버튼 -->
+  <!-- 모바일 채팅 열기 버튼 -->
   <button id="mobileChatBtn" class="mobile-chat-toggle">💬</button>
 
-  <!-- 모바일용 채팅 팝업 -->
+  <!-- 모바일 채팅 팝업 -->
   <div id="mobileChatPopup" class="mobile-chat-popup">
     <div class="chat-header">
       <span>채팅</span>
@@ -156,6 +174,7 @@
 
 </div>
 
+<!-- 스크립트 -->
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 <script src="js/quiz.js"></script>

@@ -8,6 +8,7 @@ let stompClient = null;
 let timerInterval = null;
 let isTimeOver = false;
 let correctChart = null;
+
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("[DEBUG] DOMContentLoaded fired");
 
@@ -21,15 +22,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.getElementById("roomCode").textContent = roomCode;
 
-  console.log("[DEBUG] roomCode =", roomCode);
-
   await fetchRoomData();
   await fetchRoomStatus();
   setupLobbyEvents();
   startLobbyPolling();
-
-  console.log("[DEBUG] calling connectWebSocket()");
   connectWebSocket();
+  setupMobileChatEvents();
+  setupMobileChatSend();
 
   document.getElementById("submitAnswerBtn").addEventListener("click", submitAnswer);
 
@@ -38,8 +37,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       await showResult();
       document.getElementById("showResultBtn").style.display = "none";
     });
-  }  
+  }
 });
+
 
 async function fetchRoomStatus() {
   const res = await fetch(`${API_URL}/rooms/status?code=${roomCode}`);
@@ -365,10 +365,12 @@ function connectWebSocket() {
       showQuizScreen();
     }
 
+    // 메시지 수신 구독
     stompClient.subscribe(`/topic/room/${roomCode}`, (message) => {
       const data = JSON.parse(message.body);
       console.log("[WebSocket] 수신됨:", data);
 
+      // 퀴즈 시작
       if (data.type === "startQuiz") {
         currentQuestionIndex = data.currentQuestionIndex || 0;
         showQuizScreen();
@@ -378,6 +380,7 @@ function connectWebSocket() {
         startTimer(remainTime, data.endTime);
       }
 
+      // 문제 넘기기
       if (data.type === "questionIndex") {
         currentQuestionIndex = data.currentQuestionIndex;
         renderQuestion();
@@ -387,14 +390,17 @@ function connectWebSocket() {
         startTimer(remainTime, data.endTime);
       }
 
+      // 결과 보기
       if (data.type === "showResult") {
         updateResultModal(data);
       }
 
+      // 결과 닫기
       if (data.type === "closeResult") {
         document.getElementById("resultModal").style.display = "none";
       }
 
+      // 채팅 수신 처리 (📌 데스크탑 + 모바일 모두 반영)
       if (data.type === "chat") {
         const nickname = data.nickname;
         const message = data.message;
@@ -420,6 +426,7 @@ function connectWebSocket() {
     });
   });
 }
+
   
 function sendQuestionIndex(index) {
   if (stompClient && stompClient.connected) {
@@ -568,7 +575,6 @@ function startTimer(limitSeconds, endTime) {
   timerInterval = setInterval(update, 1000);
 }
 
-//제출버튼 활성화
 function disableSubmitButton() {
   const btn = document.getElementById("submitAnswerBtn");
   if (btn) {
@@ -578,7 +584,6 @@ function disableSubmitButton() {
   }
 }
 
-//제출버튼 비활성화
 function enableSubmitButton() {
   const btn = document.getElementById("submitAnswerBtn");
   if (btn) {
@@ -588,135 +593,250 @@ function enableSubmitButton() {
   }
 }
 
-// 결과 모달 업데이트 함수
-function updateResultModal(data) {
-  document.getElementById("correctRateText").textContent = `${data.correctRate}%`;
-  document.getElementById("rank1Name").textContent = data.ranking[0]?.nickname || "-";
-  document.getElementById("rank2Name").textContent = data.ranking[1]?.nickname || "-";
-  document.getElementById("rank3Name").textContent = data.ranking[2]?.nickname || "-";
 
-  const scoreRankingList = document.getElementById("scoreRankingList");
-  scoreRankingList.innerHTML = "";
-  data.ranking.forEach(r => {
-    const li = document.createElement("li");
-    li.textContent = `${r.nickname} - ${r.score}점`;
-    scoreRankingList.appendChild(li);
-  });
+function initializeMobileSlides() {
+  const sections = document.querySelectorAll('.result-section');
+  let currentIndex = 0;
 
-  const fastestList = document.getElementById("fastestList");
-  fastestList.innerHTML = "";
-  data.fastest.forEach(f => {
-    const li = document.createElement("li");
-    li.textContent = `${f.nickname} - ${f.time}초`;
-    fastestList.appendChild(li);
-  });
-
-  document.getElementById("fast1Name").textContent = data.fastest[0]?.nickname || "-";
-  document.getElementById("fast2Name").textContent = data.fastest[1]?.nickname || "-";
-  document.getElementById("fast3Name").textContent = data.fastest[2]?.nickname || "-";
-  const correctRate = data.correctRate;
-  const totalParticipants = data.ranking.length;
-  const correctCount = Math.round((correctRate / 100) * totalParticipants);
-  const incorrectCount = totalParticipants - correctCount;
-  renderCorrectRateChart(correctCount, incorrectCount);
-  const closeBtn = document.getElementById("closeResultBtn");
-  closeBtn.style.display = isHost ? "inline-block" : "none";
-
-  document.getElementById("resultModal").style.display = "block";
-}
-
-//결과보기 함수
-async function showResult() {
-  const res = await fetch(`${API_URL}/rooms/result/${roomCode}/${currentQuestionIndex}?userId=${localStorage.getItem("loggedInUser")}`);
-  const data = await res.json();
-
-  if (!data.success) {
-    alert("결과 불러오기 실패");
-    return;
-  }
-
-  updateResultModal(data);
-
-  const correctRate = data.correctRate;
-  const totalParticipants = data.ranking.length;
-  const correctCount = Math.round((correctRate / 100) * totalParticipants);
-  const incorrectCount = totalParticipants - correctCount;
-
-  const ctx = document.getElementById("correctRateChart")?.getContext("2d");
-  if (!ctx) {
-    console.warn("correctRateChart 캔버스를 찾을 수 없습니다.");
-    return;
-  }
-
-  if (correctChart) {
-    correctChart.destroy();
-  }
-
-  correctChart = new Chart(ctx, {
-    type: "doughnut",
-    data: {
-      labels: ["정답자", "오답자"],
-      datasets: [{
-        data: [correctCount, incorrectCount],
-        backgroundColor: ["#4CAF50", "#F44336"],
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: false,
-      plugins: {
-        legend: {
-          display: true,
-          position: "bottom"
-        }
-      }
+  sections.forEach((section, index) => {
+    section.classList.remove('active', 'next', 'prev');
+    if (index === 0) {
+      section.classList.add('active');
+    } else {
+      section.classList.add('next');
     }
   });
 
-  const chartContainer = document.getElementById("chartContainer");
-  if (chartContainer) {
-    chartContainer.innerHTML = '<canvas id="resultChart" width="400" height="400"></canvas>';
-    const barCtx = document.getElementById("resultChart").getContext("2d");
+  document.getElementById('prevSlideBtn').addEventListener('click', () => {
+    if (currentIndex > 0) {
+      sections[currentIndex].classList.remove('active');
+      sections[currentIndex].classList.add('next');
 
-    new Chart(barCtx, {
+      currentIndex--;
+      sections[currentIndex].classList.remove('prev');
+      sections[currentIndex].classList.add('active');
+
+      renderCurrentChart(currentIndex);
+    }
+  });
+
+  document.getElementById('nextSlideBtn').addEventListener('click', () => {
+    if (currentIndex < sections.length - 1) {
+      sections[currentIndex].classList.remove('active');
+      sections[currentIndex].classList.add('prev');
+
+      currentIndex++;
+      sections[currentIndex].classList.remove('next');
+      sections[currentIndex].classList.add('active');
+
+      renderCurrentChart(currentIndex);
+    }
+  });
+}
+
+function renderCurrentChart(index) {
+  if (index === 1) {
+    const correctRate = parseFloat(document.getElementById("correctRateText").textContent) || 0;
+    const totalParticipants = document.querySelectorAll("#scoreRankingList li").length;
+    const correctCount = Math.round((correctRate / 100) * totalParticipants);
+    const incorrectCount = totalParticipants - correctCount;
+    renderCorrectRateChart(correctCount, incorrectCount);
+  }
+}
+
+// 결과 모달 업데이트 함수
+let scoreChart = null;
+let fastChart = null;
+
+function updateResultModal(data) {
+  document.getElementById("correctRateText").textContent = `${data.correctRate}%`;
+
+  const correctRate = data.correctRate;
+  const totalParticipants = data.ranking.length;
+  const correctCount = Math.round((correctRate / 100) * totalParticipants);
+  const incorrectCount = totalParticipants - correctCount;
+
+  renderCorrectRateChart(correctCount, incorrectCount);
+
+  const scoreCtx = document.getElementById("scorePodiumChart")?.getContext("2d");
+  if (scoreCtx) {
+    if (scoreChart) scoreChart.destroy();
+    scoreChart = new Chart(scoreCtx, {
       type: "bar",
       data: {
-        labels: ["정답자", "오답자"],
+        labels: ["🥇", "🥈", "🥉"],
         datasets: [{
-          label: "응답 수",
-          data: [correctCount, incorrectCount],
-          backgroundColor: ["#4CAF50", "#F44336"]
+          label: "점수",
+          data: [
+            data.ranking[0]?.score || 0,
+            data.ranking[1]?.score || 0,
+            data.ranking[2]?.score || 0
+          ],
+          backgroundColor: ["#FFD700", "#C0C0C0", "#CD7F32"]
         }]
       },
       options: {
-        responsive: true,
+        indexAxis: "x",
         plugins: {
-          legend: { display: false }
+          legend: { display: false },
+          tooltip: { enabled: false }
         },
+        layout: { padding: 0 },
+        maintainAspectRatio: false,
         scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { stepSize: 1 }
+          x: { display: false, grid: { display: false }, offset: false },
+          y: { display: false, grid: { display: false }, beginAtZero: true, suggestedMax: 10 }
+        },
+        elements: {
+          bar: {
+            barThickness: "flex",
+            categoryPercentage: 1.0,
+            barPercentage: 1.0,
+            borderSkipped: false
           }
         }
       }
     });
   }
-  if (isHost && stompClient && stompClient.connected) {
-    stompClient.send(`/app/room/${roomCode}/showResult`, {}, JSON.stringify({
-      type: "showResult",
-      correctRate: data.correctRate,
-      ranking: data.ranking,
-      fastest: data.fastest
-    }));
-  } else {
-    console.error("[showResult] stompClient가 연결되지 않았습니다.");
+
+  const fastCtx = document.getElementById("fastPodiumChart")?.getContext("2d");
+  if (fastCtx) {
+    if (fastChart) fastChart.destroy();
+    fastChart = new Chart(fastCtx, {
+      type: "bar",
+      data: {
+        labels: ["🥇", "🥈", "🥉"],
+        datasets: [{
+          label: "속도",
+          data: [
+            data.fastest[0]?.time || 0,
+            data.fastest[1]?.time || 0,
+            data.fastest[2]?.time || 0
+          ],
+          backgroundColor: ["#FFD700", "#C0C0C0", "#CD7F32"]
+        }]
+      },
+      options: {
+        indexAxis: "x",
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false }
+        },
+        layout: { padding: 0 },
+        maintainAspectRatio: false,
+        scales: {
+          x: { display: false, grid: { display: false }, offset: false },
+          y: { display: false, grid: { display: false }, beginAtZero: true, suggestedMax: 10 }
+        },
+        elements: {
+          bar: {
+            barThickness: "flex",
+            categoryPercentage: 1.0,
+            barPercentage: 1.0,
+            borderSkipped: false
+          }
+        }
+      }
+    });
   }
 
-  if (isHost) {
-    document.getElementById("nextQuestionBtn").style.display = "inline-block";
+  document.getElementById("podium1Name").textContent = data.ranking[0]?.nickname || "-";
+  document.getElementById("podium2Name").textContent = data.ranking[1]?.nickname || "-";
+  document.getElementById("podium3Name").textContent = data.ranking[2]?.nickname || "-";
+
+  document.getElementById("fast1Name").textContent = data.fastest[0]?.nickname || "-";
+  document.getElementById("fast2Name").textContent = data.fastest[1]?.nickname || "-";
+  document.getElementById("fast3Name").textContent = data.fastest[2]?.nickname || "-";
+
+  const closeBtn = document.getElementById("closeResultBtn");
+  closeBtn.style.display = isHost ? "inline-block" : "none";
+  document.getElementById("resultModal").style.display = "block";
+
+  initializeMobileSlides();
+}
+
+
+// 모바일 슬라이드 초기화 함수
+function initializeMobileSlides() {
+  const sections = document.querySelectorAll('.result-section');
+  let currentIndex = 0;
+
+  sections.forEach((section, index) => {
+    section.classList.remove('active', 'next', 'prev');
+    if (index === 0) {
+      section.classList.add('active');
+    }
+  });
+
+  document.getElementById('prevSlideBtn').addEventListener('click', () => {
+    if (currentIndex > 0) {
+      sections[currentIndex].classList.remove('active');
+      sections[currentIndex].classList.add('next');
+      currentIndex--;
+      sections[currentIndex].classList.remove('prev');
+      sections[currentIndex].classList.add('active');
+
+      if (currentIndex === 1) {
+        const correctRate = parseFloat(document.getElementById("correctRateText").textContent);
+        const totalParticipants = document.querySelectorAll("#scoreRankingList li").length;
+        const correctCount = Math.round((correctRate / 100) * totalParticipants);
+        const incorrectCount = totalParticipants - correctCount;
+        renderCorrectRateChart(correctCount, incorrectCount);
+      }
+    }
+  });
+
+  document.getElementById('nextSlideBtn').addEventListener('click', () => {
+    if (currentIndex < sections.length - 1) {
+
+      sections[currentIndex].classList.remove('active');
+      sections[currentIndex].classList.add('prev');
+
+      currentIndex++;
+      sections[currentIndex].classList.remove('next');
+      sections[currentIndex].classList.add('active');
+
+      if (currentIndex === 1) {
+        const correctRate = parseFloat(document.getElementById("correctRateText").textContent);
+        const totalParticipants = document.querySelectorAll("#scoreRankingList li").length;
+        const correctCount = Math.round((correctRate / 100) * totalParticipants);
+        const incorrectCount = totalParticipants - correctCount;
+        renderCorrectRateChart(correctCount, incorrectCount);
+      }
+    }
+  });
+}
+
+//결과보기 함수
+async function showResult() {
+  try {
+    const res = await fetch(`${API_URL}/rooms/result/${roomCode}/${currentQuestionIndex}?userId=${localStorage.getItem("loggedInUser")}`);
+    const data = await res.json();
+
+    if (!data.success) {
+      alert("결과 불러오기 실패");
+      return;
+    }
+    updateResultModal(data);
+    if (isHost && stompClient?.connected) {
+      stompClient.send(`/app/room/${roomCode}/showResult`, {}, JSON.stringify({
+        type: "showResult",
+        correctRate: data.correctRate,
+        ranking: data.ranking,
+        fastest: data.fastest
+      }));
+    } else if (!isHost) {
+      console.log("[showResult] 참가자 화면이므로 결과 송신하지 않음");
+    }
+    if (isHost) {
+      document.getElementById("nextQuestionBtn").style.display = "inline-block";
+    }
+  } catch (error) {
+    console.error("결과 불러오기 중 오류:", error);
+    alert("서버 오류로 결과를 불러오지 못했습니다.");
   }
 }
+
 
 function renderCorrectRateChart(correctCount, wrongCount) {
   const canvas = document.getElementById("correctRateChart");
@@ -839,45 +959,64 @@ messageInput.addEventListener("keydown", (e) => {
   }
 });
 
-// 모바일 채팅 팝업 토글 로직
-const mobileChatBtn = document.getElementById("mobileChatBtn");
-const mobileChatPopup = document.getElementById("mobileChatPopup");
-const closeMobileChat = document.getElementById("closeMobileChat");
+//모바일 채팅 팝업 열기/닫기 이벤트 처리
+function setupMobileChatEvents() {
+  const mobileChatBtn = document.getElementById("mobileChatBtn");
+  const mobileChatPopup = document.getElementById("mobileChatPopup");
+  const closeMobileChat = document.getElementById("closeMobileChat");
 
-if (mobileChatBtn && mobileChatPopup) {
-  mobileChatBtn.addEventListener("click", () => {
-    mobileChatPopup.style.display = "flex";
-  });
+  if (mobileChatBtn && mobileChatPopup) {
+    mobileChatBtn.addEventListener("click", () => {
+      mobileChatPopup.style.display = "flex";
+      mobileChatBtn.style.display = "none";
+    });
+  }
+
+  if (closeMobileChat && mobileChatBtn && mobileChatPopup) {
+    closeMobileChat.addEventListener("click", () => {
+      mobileChatPopup.style.display = "none";
+      mobileChatBtn.style.display = "block";
+    });
+  }
 }
 
-if (closeMobileChat) {
-  closeMobileChat.addEventListener("click", () => {
-    mobileChatPopup.style.display = "none";
-  });
+
+//모바일 채팅 메시지 전송 함수
+function setupMobileChatSend() {
+  const mobileChatInput = document.getElementById("mobileChatInput");
+  const sendMobileChatBtn = document.getElementById("sendMobileChatBtn");
+
+  function sendMobileChat() {
+    const message = mobileChatInput.value.trim();
+    const nickname = localStorage.getItem("nickname") || "익명";
+
+    if (!message || !stompClient?.connected) return;
+
+    stompClient.send(`/app/room/${roomCode}/sendChat`, {}, JSON.stringify({
+      nickname,
+      message
+    }));
+
+    mobileChatInput.value = "";
+  }
+
+  if (sendMobileChatBtn) {
+    sendMobileChatBtn.addEventListener("click", sendMobileChat);
+  }
+
+  if (mobileChatInput) {
+    mobileChatInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMobileChat();
+      }
+    });
+  }
 }
 
-// 모바일 채팅 전송 버튼 처리
-const mobileChatInput = document.getElementById("mobileChatInput");
-const sendMobileChatBtn = document.getElementById("sendMobileChatBtn");
-
-function sendMobileChat() {
-  const message = mobileChatInput.value.trim();
-  const nickname = localStorage.getItem("nickname") || "익명";
-
-  if (!message) return;
-
-  stompClient.send(`/app/room/${roomCode}/sendChat`, {}, JSON.stringify({
-    nickname,
-    message
-  }));
-
-  mobileChatInput.value = "";
-}
-
-sendMobileChatBtn?.addEventListener("click", sendMobileChat);
-mobileChatInput?.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    sendMobileChat();
+// 퀴즈 나가기 버튼 이벤트 리스너
+document.getElementById("exitQuizBtn").addEventListener("click", () => {
+  if (confirm("퀴즈를 나가시겠습니까? 진행 중인 퀴즈는 저장되지 않습니다.")) {
+    window.location.href = "/";
   }
 });
