@@ -1,4 +1,5 @@
 const API_URL = "/api";
+Chart.register(ChartDataLabels);
 let roomCode = null;
 let currentQuestionIndex = 0;
 let questions = [];
@@ -593,47 +594,6 @@ function enableSubmitButton() {
   }
 }
 
-
-function initializeMobileSlides() {
-  const sections = document.querySelectorAll('.result-section');
-  let currentIndex = 0;
-
-  sections.forEach((section, index) => {
-    section.classList.remove('active', 'next', 'prev');
-    if (index === 0) {
-      section.classList.add('active');
-    } else {
-      section.classList.add('next');
-    }
-  });
-
-  document.getElementById('prevSlideBtn').addEventListener('click', () => {
-    if (currentIndex > 0) {
-      sections[currentIndex].classList.remove('active');
-      sections[currentIndex].classList.add('next');
-
-      currentIndex--;
-      sections[currentIndex].classList.remove('prev');
-      sections[currentIndex].classList.add('active');
-
-      renderCurrentChart(currentIndex);
-    }
-  });
-
-  document.getElementById('nextSlideBtn').addEventListener('click', () => {
-    if (currentIndex < sections.length - 1) {
-      sections[currentIndex].classList.remove('active');
-      sections[currentIndex].classList.add('prev');
-
-      currentIndex++;
-      sections[currentIndex].classList.remove('next');
-      sections[currentIndex].classList.add('active');
-
-      renderCurrentChart(currentIndex);
-    }
-  });
-}
-
 function renderCurrentChart(index) {
   if (index === 1) {
     const correctRate = parseFloat(document.getElementById("correctRateText").textContent) || 0;
@@ -647,16 +607,45 @@ function renderCurrentChart(index) {
 // 결과 모달 업데이트 함수
 let scoreChart = null;
 let fastChart = null;
-
 function updateResultModal(data) {
+  Chart.register(ChartDataLabels);
+  const isMobile = window.innerWidth <= 768;
+
   document.getElementById("correctRateText").textContent = `${data.correctRate}%`;
 
   const correctRate = data.correctRate;
-  const totalParticipants = data.ranking.length;
+  const totalParticipants = Math.max(data.ranking.length, 1);
   const correctCount = Math.round((correctRate / 100) * totalParticipants);
   const incorrectCount = totalParticipants - correctCount;
-
   renderCorrectRateChart(correctCount, incorrectCount);
+
+  const podiumRanking = [data.ranking[1], data.ranking[0], data.ranking[2]].map(entry => {
+    return entry || { nickname: "-", score: 0 };
+  });
+
+  const fullRanking = [data.ranking[0], data.ranking[1], data.ranking[2]].map(entry => {
+    return entry || { nickname: "-", score: 0 };
+  });
+
+  const scoreList = document.getElementById("scoreRankingList");
+  scoreList.innerHTML = "";
+  fullRanking.forEach((entry, i) => {
+    const li = document.createElement("li");
+    li.textContent = `${i + 1}. ${entry.nickname} (${entry.score}점)`;
+    scoreList.appendChild(li);
+  });
+
+  const podiumFastest = [data.fastest[1], data.fastest[0], data.fastest[2]].map(entry => {
+    return entry || { nickname: "-", time: 0 };
+  });
+
+  const fastList = document.getElementById("fastestList");
+  fastList.innerHTML = "";
+  podiumFastest.forEach((entry, i) => {
+    const li = document.createElement("li");
+    li.textContent = `${i + 1}. ${entry.nickname} (${entry.time.toFixed(1)}초)`;
+    fastList.appendChild(li);
+  });
 
   const scoreCtx = document.getElementById("scorePodiumChart")?.getContext("2d");
   if (scoreCtx) {
@@ -664,38 +653,56 @@ function updateResultModal(data) {
     scoreChart = new Chart(scoreCtx, {
       type: "bar",
       data: {
-        labels: ["🥇", "🥈", "🥉"],
+        labels: ["🥈", "🥇", "🥉"],
         datasets: [{
-          label: "점수",
-          data: [
-            data.ranking[0]?.score || 0,
-            data.ranking[1]?.score || 0,
-            data.ranking[2]?.score || 0
-          ],
-          backgroundColor: ["#FFD700", "#C0C0C0", "#CD7F32"]
+          data: [25, 35, 15],
+          backgroundColor: ["#C0C0C0", "#FFD700", "#CD7F32"]
         }]
       },
       options: {
+        maintainAspectRatio: false,
+        responsive: true,
         indexAxis: "x",
         plugins: {
           legend: { display: false },
-          tooltip: { enabled: false }
+          tooltip: { enabled: false },
+          datalabels: {
+            anchor: "end",
+            align: isMobile ? "top" : "end",
+            color: "#000",
+            font: {
+              weight: "bold",
+              size: isMobile ? 8 : 14
+            },
+            formatter: (value, ctx) => podiumRanking[ctx.dataIndex].nickname,
+            clip: false
+          }
         },
-        layout: { padding: 0 },
+        layout: {
+          padding: {
+            top: isMobile ? 30 : 10
+          }
+        },
         maintainAspectRatio: false,
         scales: {
-          x: { display: false, grid: { display: false }, offset: false },
-          y: { display: false, grid: { display: false }, beginAtZero: true, suggestedMax: 10 }
+          x: { display: false, grid: { display: false } },
+          y: {
+    display: false,
+    grid: { display: false },
+    suggestedMin: 0,
+    suggestedMax: Math.max(...podiumRanking.map(p => p.score || 0), 10) + 5
+  }
         },
         elements: {
           bar: {
+            borderRadius: 5,
             barThickness: "flex",
             categoryPercentage: 1.0,
-            barPercentage: 1.0,
-            borderSkipped: false
+            barPercentage: 1.0
           }
         }
-      }
+      },
+      plugins: [ChartDataLabels]
     });
   }
 
@@ -705,54 +712,66 @@ function updateResultModal(data) {
     fastChart = new Chart(fastCtx, {
       type: "bar",
       data: {
-        labels: ["🥇", "🥈", "🥉"],
+        labels: ["🥈", "🥇", "🥉"],
         datasets: [{
-          label: "속도",
-          data: [
-            data.fastest[0]?.time || 0,
-            data.fastest[1]?.time || 0,
-            data.fastest[2]?.time || 0
-          ],
-          backgroundColor: ["#FFD700", "#C0C0C0", "#CD7F32"]
+          data: [25, 35, 15],
+          backgroundColor: ["#C0C0C0", "#FFD700", "#CD7F32"]
         }]
       },
       options: {
+        maintainAspectRatio: false,
+        responsive: true,
         indexAxis: "x",
         plugins: {
           legend: { display: false },
-          tooltip: { enabled: false }
+          tooltip: { enabled: false },
+          datalabels: {
+            anchor: "end",
+            align: isMobile ? "top" : "end",
+            color: "#000",
+            font: {
+              weight: "bold",
+              size: isMobile ? 8 : 14
+            },
+            formatter: (value, ctx) => podiumFastest[ctx.dataIndex].nickname,
+            clip: false
+          }
         },
-        layout: { padding: 0 },
+        layout: {
+          padding: {
+            top: isMobile ? 30 : 10
+          }
+        },
         maintainAspectRatio: false,
         scales: {
-          x: { display: false, grid: { display: false }, offset: false },
-          y: { display: false, grid: { display: false }, beginAtZero: true, suggestedMax: 10 }
+          x: { display: false, grid: { display: false } },
+          y: {
+    display: false,
+    grid: { display: false },
+    suggestedMin: 0,
+    suggestedMax: Math.max(...podiumRanking.map(p => p.score || 0), 10) + 5
+  }
         },
         elements: {
           bar: {
+            borderRadius: 5,
             barThickness: "flex",
             categoryPercentage: 1.0,
-            barPercentage: 1.0,
-            borderSkipped: false
+            barPercentage: 1.0
           }
         }
-      }
+      },
+      plugins: [ChartDataLabels]
     });
   }
-
-  document.getElementById("podium1Name").textContent = data.ranking[0]?.nickname || "-";
-  document.getElementById("podium2Name").textContent = data.ranking[1]?.nickname || "-";
-  document.getElementById("podium3Name").textContent = data.ranking[2]?.nickname || "-";
-
-  document.getElementById("fast1Name").textContent = data.fastest[0]?.nickname || "-";
-  document.getElementById("fast2Name").textContent = data.fastest[1]?.nickname || "-";
-  document.getElementById("fast3Name").textContent = data.fastest[2]?.nickname || "-";
 
   const closeBtn = document.getElementById("closeResultBtn");
   closeBtn.style.display = isHost ? "inline-block" : "none";
   document.getElementById("resultModal").style.display = "block";
 
-  initializeMobileSlides();
+  if (window.innerWidth <= 768) {
+    initializeMobileSlides();
+  }
 }
 
 
@@ -840,9 +859,15 @@ async function showResult() {
 
 function renderCorrectRateChart(correctCount, wrongCount) {
   const canvas = document.getElementById("correctRateChart");
-  canvas.width = 400;
-  canvas.height = 400;
-  const ctx = document.getElementById("correctRateChart").getContext("2d");
+  if (!canvas) return;
+
+  // 최소 1명은 존재하도록 보정 (그래프가 아예 비어 있으면 오류 발생 방지)
+  if (correctCount === 0 && wrongCount === 0) {
+    correctCount = 1;
+    wrongCount = 0;
+  }
+
+  const ctx = canvas.getContext("2d");
 
   if (correctChart) {
     correctChart.destroy();
@@ -864,6 +889,15 @@ function renderCorrectRateChart(correctCount, wrongCount) {
         legend: {
           display: true,
           position: "bottom"
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              const label = context.label || "";
+              const value = context.raw || 0;
+              return `${label}: ${value}명`;
+            }
+          }
         }
       }
     }

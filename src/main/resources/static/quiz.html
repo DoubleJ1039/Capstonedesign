@@ -2,10 +2,10 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <meta name="theme-color" content="#BFD8E2"/>
-  <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#BFD8E2" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>퀴즈</title>
   <link rel="stylesheet" href="css/quiz.css" />
 </head>
@@ -32,13 +32,12 @@
 <div id="quizScreen" style="display: none;">
   <div class="quiz-container">
 
-    <!-- 왼쪽 -->
+    <!-- 왼쪽 패널 -->
     <aside class="left-panel">
       <div id="roomCodeBox">
         <p>방 코드: <span id="roomCode">----</span></p>
       </div>
 
-      <!-- 데스크탑 채팅창 -->
       <div class="chat-box desktop-chat">
         <div class="chat-messages" id="chatMessages"></div>
         <div class="chat-input-box">
@@ -48,12 +47,12 @@
       </div>
     </aside>
 
-    <!-- 오른쪽 -->
+    <!-- 오른쪽 퀴즈 메인 -->
     <section class="right-panel">
       <main class="quiz-main">
         <section class="question-box">
 
-          <!-- 문제 컨트롤 버튼 -->
+          <!-- 상단 컨트롤 -->
           <div id="topControls" class="top-controls-inside" style="display: none;">
             <button id="exitQuizBtn" class="exit-btn">퀴즈 나가기</button>
             <button id="nextQuestionBtn" style="display: none;">다음 문제 →</button>
@@ -78,14 +77,14 @@
                 <span id="timerText">00</span>
               </div>
             </div>
-            
-            <!-- 객관식/선택지 -->
+
+            <!-- 선택지 -->
             <div class="choices-container">
               <ul id="choicesList" class="choices-list"></ul>
             </div>
 
             <!-- 제출 버튼 -->
-            <div class="submit-button-wrapper" style="text-align: center; margin-top: 31px;">
+            <div class="submit-button-wrapper">
               <button id="submitAnswerBtn" class="submit-btn">제출하기</button>
             </div>
 
@@ -95,32 +94,23 @@
             </div>
 
             <!-- 결과 보기 모달 -->
-            <div id="resultModal" class="result-modal" style="display: none;">
+            <div id="resultModal" class="result-modal" role="dialog" aria-modal="true" aria-labelledby="resultModalTitle" style="display: none;">
               <div class="result-modal-content">
-                <h2>결과 보기</h2>
+                <h2 id="resultModalTitle">결과 보기</h2>
                 <button id="closeResultBtn">확인</button>
 
-                <!-- 제목 가로 정렬 -->
-                <div class="result-titles">
-                  <div>점수 랭킹</div>
-                  <div>정답자 비율</div>
-                  <div>가장 빠르게 맞춘 TOP3</div>
-                </div>
-
-                <!-- 슬라이드 컨트롤 버튼 -->
                 <div class="slide-controls">
                   <button id="prevSlideBtn" class="slide-btn">←</button>
                   <button id="nextSlideBtn" class="slide-btn">→</button>
                 </div>
 
-                <!-- 결과 콘텐츠 -->
                 <div class="result-contents">
 
                   <!-- 점수 랭킹 -->
                   <div class="result-section">
                     <h3>점수 랭킹</h3>
                     <ol id="scoreRankingList"></ol>
-                    <canvas id="scorePodiumChart"></canvas>
+                    <canvas id="scorePodiumChart" aria-label="점수 랭킹 그래프" role="img"></canvas>
                     <div class="podium-names">
                       <div id="podium1Name" class="podium-label">-</div>
                       <div id="podium2Name" class="podium-label">-</div>
@@ -130,16 +120,15 @@
 
                   <!-- 정답자 비율 -->
                   <div class="result-section">
-                    <h3>정답자 비율</h3>
-                    <span id="correctRateText">-</span>
-                    <canvas id="correctRateChart"></canvas>
+                    <h3>정답자 비율: <span id="correctRateText">-</span></h3>
+                    <canvas id="correctRateChart" aria-label="정답자 비율 도넛 차트" role="img"></canvas>
                   </div>
 
                   <!-- 빠르게 푼 TOP3 -->
                   <div class="result-section">
                     <h3>빠른 정답 Top3</h3>
                     <ol id="fastestList"></ol>
-                    <canvas id="fastPodiumChart"></canvas>
+                    <canvas id="fastPodiumChart" aria-label="빠른 정답 순위 그래프" role="img"></canvas>
                     <div class="podium-names">
                       <div id="fast1Name" class="podium-label">-</div>
                       <div id="fast2Name" class="podium-label">-</div>
@@ -147,7 +136,7 @@
                     </div>
                   </div>
                 </div>
-              </div>              
+              </div>
             </div>
 
           </div>
@@ -156,14 +145,13 @@
     </section>
   </div>
 
-  <!-- 모바일 채팅 열기 버튼 -->
-  <button id="mobileChatBtn" class="mobile-chat-toggle">💬</button>
+  <!-- 모바일 채팅 -->
+  <button id="mobileChatBtn" class="mobile-chat-toggle" aria-label="채팅 열기">💬</button>
 
-  <!-- 모바일 채팅 팝업 -->
   <div id="mobileChatPopup" class="mobile-chat-popup">
     <div class="chat-header">
       <span>채팅</span>
-      <button id="closeMobileChat">✕</button>
+      <button id="closeMobileChat" aria-label="채팅 닫기">✕</button>
     </div>
     <div class="chat-messages" id="mobileChatMessages"></div>
     <div class="chat-input-box">
@@ -171,13 +159,13 @@
       <button id="sendMobileChatBtn">전송</button>
     </div>
   </div>
-
 </div>
 
 <!-- 스크립트 -->
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="js/quiz.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>

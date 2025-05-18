@@ -475,14 +475,40 @@ html, body {
 }
 
 .result-section canvas {
-  width: 400px;
-  height: 400px;
-  margin-bottom: 350px;
-  transform: translateX(62px);
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.result-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
 }
 
 canvas {
   pointer-events: none;
+}
+
+.result-section:nth-child(2) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 20px;
+}
+
+#correctRateChart {
+  transform: none !important;
+  margin-top: 10px;
+}
+
+#correctRateText {
+  display: inline-block;
+  font-size: 16px;
+  text-align: center;
+  margin-bottom: 10px;
 }
 
 #closeResultBtn {
@@ -495,21 +521,6 @@ canvas {
   z-index: 10;
 }
 
-/* 모바일 채팅 팝업 */
-#mobileChatPopup {
-  display: none;
-  flex-direction: column;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 300px;
-  background: white;
-  border-top: 2px solid #ccc;
-  z-index: 999;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.15);
-}
-
 #mobileChatBox.open {
   display: flex;
 }
@@ -517,6 +528,24 @@ canvas {
 #mobileChatBtn {
   display: none;
 }
+
+/* 포디움 */
+#scorePodiumChart,
+#fastPodiumChart {
+  transform: translateY(-483px);
+  margin-bottom: -270px;
+  width: 500px;
+  height: 200px;
+  margin: 0px auto 10 auto;
+}
+
+/* 슬라이드 컨트롤 버튼: 모바일에서만 보이게 */
+@media screen and (min-width: 769px) {
+  .slide-controls {
+    display: none !important;
+  }
+}
+
 /* 모바일 반응형 스타일 */
 @media screen and (max-width: 768px) {
 
@@ -855,5 +884,7 @@ canvas {
 #mobileChatPopup .chat-input-box button:hover {
   background-color: #97becf;
 }
-
+#closeResultBtn {
+  margin-bottom: 40px;
+}
 }
