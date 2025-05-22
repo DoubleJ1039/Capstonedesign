@@ -499,8 +499,21 @@ document.getElementById("exit-button").addEventListener("click", () => {
 });
 
 window.addEventListener("DOMContentLoaded", () => {
+  const loggedInUser = localStorage.getItem("loggedInUser");
+  const roomCode = new URLSearchParams(window.location.search).get("code");
+
+  console.log("로컬스토리지 저장된 이메일:", loggedInUser);
+  console.log("URL 파라미터로 받은 방 코드:", roomCode);
+
+  if (!loggedInUser) {
+    alert("로그인이 필요합니다.");
+    window.location.href = "/login.html";
+    return;
+  }
+
   if (!roomCode) {
     alert("방 코드가 없습니다.");
+    window.location.href = "/roomop.html";
     return;
   }
 
@@ -508,30 +521,64 @@ window.addEventListener("DOMContentLoaded", () => {
     .then(res => res.json())
     .then(data => {
       console.log("백엔드 응답:", data);
-      if (data.success && data.testQuestions) {
-        questions = data.testQuestions.map(q => {
-          let parsedAnswer = q.correctAnswer;
-          if (typeof parsedAnswer === "string" || Array.isArray(parsedAnswer)) {
-          } else if (typeof parsedAnswer === "number") {
-            parsedAnswer = [parsedAnswer];
-          } else {
-            parsedAnswer = [];
-          }
-          return {
-            type: q.type || "multiple",
-            text: q.questionText,
-            image: q.questionImage,
-            choices: q.choices || [],
-            correctAnswer: parsedAnswer,
-            name: q.name || "",
-            time: q.time || 30,
-            score: q.score || 100,
-            templateImageName: q.templateImageName || "classic.png"
-          };
-        });
+      console.log("백엔드 방장 이메일:", data.professorEmail);
+      console.log("로컬스토리지 이메일:", loggedInUser);
+
+      if (!data.success) {
+        alert("방 정보를 불러오지 못했습니다.");
+        window.location.href = "/roomop.html";
+        return;
+      }
+
+      if (data.professorEmail !== loggedInUser) {
+        alert("이 방을 수정할 권한이 없습니다.");
+        window.location.href = "/roomop.html";
+        return;
+      }
+
+      if (Array.isArray(data.testQuestions) && data.testQuestions.length > 0) {
+        console.log("받은 testQuestions 배열:", data.testQuestions);
+
+        questions = data.testQuestions
+          .filter(Boolean)
+          .map(q => {
+            if (!q) return null;
+
+            let parsedAnswer = q.correctAnswer;
+            if (typeof parsedAnswer === "string" || Array.isArray(parsedAnswer)) {
+            } else if (typeof parsedAnswer === "number") {
+              parsedAnswer = [parsedAnswer];
+            } else {
+              parsedAnswer = [];
+            }
+
+            return {
+              type: q.type || "multiple",
+              text: q.questionText || "",
+              image: q.questionImage || "",
+              choices: q.choices || [],
+              correctAnswer: parsedAnswer,
+              name: q.name || "",
+              time: q.time || 30,
+              score: q.score || 100,
+              templateImageName: q.templateImageName || "classic.png"
+            };
+          })
+          .filter(Boolean);
+
         currentIndex = 0;
         renderQuestionList();
         loadQuestion(currentIndex);
+      } else {
+        console.warn("testQuestions가 비어 있음 또는 존재하지 않음");
+        questions = [];
+        currentIndex = -1;
+        renderQuestionList();
       }
     })
+    .catch(err => {
+      console.error("방 정보 로딩 중 오류:", err);
+      alert("데이터 처리 중 오류가 발생했습니다.");
+      window.location.href = "/roomop.html";
+    });
 });

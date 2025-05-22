@@ -29,7 +29,6 @@ public class que {
         this.type = type;
     }
 
-    // === Getter & Setter ===
     public String getQuestionText() {
         return questionText;
     }
