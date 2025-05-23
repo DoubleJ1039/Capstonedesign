@@ -6,7 +6,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.Map;
 
 @RestController
@@ -24,12 +23,8 @@ public class ImageController {
     // 이미지 업로드
     @PostMapping("/image")
     public ResponseEntity<?> uploadImage(@RequestParam("file") MultipartFile file) {
-        try {
-            Map uploadResult = cloudinaryService.uploadImage(file);
-            return ResponseEntity.ok(uploadResult);
-        } catch (IOException e) {
-            return ResponseEntity.status(500).body("이미지 업로드 실패: " + e.getMessage());
-        }
+        Map<?, ?> uploadResult = cloudinaryService.uploadImage(file);
+        return ResponseEntity.ok(uploadResult);
     }
 
     // 이미지 삭제
@@ -40,11 +35,11 @@ public class ImageController {
             return ResponseEntity.badRequest().body("public_id가 필요합니다.");
         }
 
-        try {
-            Map result = cloudinaryService.deleteImage(publicId);
-            return ResponseEntity.ok(result);
-        } catch (IOException e) {
-            return ResponseEntity.status(500).body("삭제 실패: " + e.getMessage());
+        boolean deleted = cloudinaryService.deleteImage(publicId);
+        if (deleted) {
+            return ResponseEntity.ok(Map.of("success", true, "message", "삭제 성공"));
+        } else {
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", "삭제 실패"));
         }
     }
 }

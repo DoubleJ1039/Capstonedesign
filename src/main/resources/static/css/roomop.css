@@ -64,17 +64,22 @@ body {
   
   
   #logoutButton {
-    padding: 8px 14px;
-    background-color: #ff4d4d;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  
-  #logoutButton:hover {
-    background-color: #cc0000;
-  }
+  padding: 8px 14px;
+  background-color: black;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 14px;
+  font-weight: normal;
+  line-height: normal;
+}
+
+#logoutButton:hover {
+  background-color: gray;
+}
+
   
   /* 메인 */
   main {

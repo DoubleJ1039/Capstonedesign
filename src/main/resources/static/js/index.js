@@ -16,8 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initCarousel();
 });
 
-/* ----- 인증/로그인 관련 기존 코드 ----- */
-function initAuth() {
+async function initAuth() {
   const authButton = document.getElementById("authButton");
   const mobileAuthButton = document.getElementById("mobileAuthButton");
   const userGreeting = document.getElementById("userGreeting");
@@ -25,10 +24,23 @@ function initAuth() {
   const loggedInUser = localStorage.getItem("loggedInUser");
 
   if (loggedInUser) {
+    try {
+      const res = await fetch(`${API_URL}/auth/user/info?email=${encodeURIComponent(loggedInUser)}`);
+      const data = await res.json();
+
+      if (data.success) {
+        userGreeting.textContent = `안녕하세요 ${data.displayName} 님`;
+      } else {
+        userGreeting.textContent = "";
+      }
+    } catch (err) {
+      console.error("닉네임 불러오기 실패", err);
+      userGreeting.textContent = "";
+    }
+
     authButton.textContent = "로그아웃";
     mobileAuthButton.textContent = "로그아웃";
     authButton.className = "logout-btn";
-    userGreeting.textContent = `안녕하세요 ${loggedInUser} 님`;
     loginTextButton.style.display = "none";
   } else {
     authButton.textContent = "로그인";
@@ -43,7 +55,6 @@ function initAuth() {
     }
   }
 }
-
 
 function handleAuth() {
   const loggedInUser = localStorage.getItem("loggedInUser");

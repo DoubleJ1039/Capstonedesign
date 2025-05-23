@@ -129,7 +129,12 @@ async function handleEmailNext() {
   }
 
   sendEmailCode();
-  document.getElementById("display-email").textContent = email;
+
+  const displayEmailEl = document.getElementById("display-email");
+  if (displayEmailEl) {
+    displayEmailEl.textContent = email;
+  }
+
   goToStep(2);
 }
 
@@ -242,8 +247,8 @@ function validatePassword() {
   const hasSpecialChar = /[^A-Za-z0-9]/.test(pw);
 
   feedback.innerHTML = `
-    <p style="color: ${isLongEnough ? 'green' : 'red'};">✔ 8자 이상</p>
-    <p style="color: ${hasSpecialChar ? 'green' : 'red'};">✔ 특수문자 포함</p>
+    <span style="color: ${isLongEnough ? 'green' : 'red'};">✔ 8자 이상</span>
+    <span style="color: ${hasSpecialChar ? 'green' : 'red'};">✔ 특수문자 포함</span>
   `;
 }
 
@@ -254,22 +259,153 @@ document.addEventListener("DOMContentLoaded", () => {
     const loggedInUser = localStorage.getItem("loggedInUser");
 
     if (loggedInUser) {
-        authButton.textContent = "로그아웃";
-        authButton.className = "logout-btn";
-        userGreeting.textContent = `안녕하세요 ${loggedInUser} 님`;
-        authButton.onclick = logout;
+        if (authButton) {
+            authButton.textContent = "로그아웃";
+            authButton.className = "logout-btn";
+            authButton.onclick = logout;
+        }
+        if (userGreeting) {
+            userGreeting.textContent = `안녕하세요 ${loggedInUser} 님`;
+        }
     } else {
-        authButton.textContent = "로그인";
-        authButton.className = "login-btn";
-        userGreeting.textContent = ""; 
-        authButton.onclick = () => window.location.href = "login.html";
+        if (authButton) {
+            authButton.textContent = "로그인";
+            authButton.className = "login-btn";
+            authButton.onclick = () => window.location.href = "login.html";
+        }
+        if (userGreeting) {
+            userGreeting.textContent = "";
+        }
     }
 });
+
 
 function logout() {
     localStorage.removeItem("loggedInUser");
     alert("로그아웃되었습니다.");
     location.reload();
+}
+
+//비밀번호 찾기
+function toggleFind() {
+  document.querySelector(".login-container").classList.add("hidden");
+  document.querySelector(".register-container").classList.add("hidden");
+  document.querySelector(".find-container").classList.remove("hidden");
+  goToFindStep(1);
+}
+
+function goToFindStep(step) {
+  for (let i = 1; i <= 3; i++) {
+    document.getElementById(`find-step${i}`).classList.add("hidden");
+  }
+  document.getElementById(`find-step${step}`).classList.remove("hidden");
+}
+
+function backToLogin() {
+  document.querySelector(".login-container").classList.remove("hidden");
+  document.querySelector(".register-container").classList.add("hidden");
+  document.querySelector(".find-container").classList.add("hidden");
+}
+
+async function sendFindCode() {
+  const email = document.getElementById("find-email").value.trim();
+  if (!email) {
+    alert("이메일을 입력하세요.");
+    return;
+  }
+
+  const emailExists = await checkEmailExists(email);
+  if (!emailExists) {
+    alert("해당 이메일로 가입된 계정이 없습니다.");
+    return;
+  }
+
+  const res = await fetch("/api/auth/send-email-code", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email })
+  });
+
+  const data = await res.json();
+  if (data.success) {
+    document.getElementById("find-display-email").textContent = email;
+    goToFindStep(2);
+  } else {
+    alert("1분 후 다시 시도해주세요.");
+  }
+}
+
+async function verifyFindCode() {
+  const email = document.getElementById("find-email").value.trim();
+  const code = document.getElementById("find-code").value.trim();
+  if (!code) {
+    alert("인증코드를 입력하세요.");
+    return;
+  }
+
+  const res = await fetch("/api/auth/verify-email-code", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, code })
+  });
+
+  const data = await res.json();
+  if (data.verified) {
+    goToFindStep(3);
+  } else {
+    alert("인증코드가 잘못되었습니다.");
+  }
+}
+
+function validateFindPassword() {
+  const pw = document.getElementById("find-new-password").value;
+  const feedback = document.getElementById("find-password-feedback");
+
+  const isLongEnough = pw.length >= 8;
+  const hasSpecialChar = /[^A-Za-z0-9]/.test(pw);
+
+  if (!isLongEnough || !hasSpecialChar) {
+    feedback.textContent = "비밀번호는 8자 이상이며 특수문자를 포함해야 합니다.";
+  } else {
+    feedback.textContent = "";
+  }
+}
+
+//비밀번호 초기화
+async function resetPassword() {
+  const email = document.getElementById("find-email").value;
+  const newPassword = document.getElementById("find-new-password").value;
+  const confirmPassword = document.getElementById("find-confirm-password").value;
+  const feedback = document.getElementById("find-password-feedback");
+
+  const isValid = newPassword.length >= 8 && /[^A-Za-z0-9]/.test(newPassword);
+  if (!isValid) {
+    feedback.textContent = "비밀번호는 8자 이상이며 특수문자를 포함해야 합니다.";
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    feedback.textContent = "비밀번호 확인이 일치하지 않습니다.";
+    return;
+  }
+
+  const res = await fetch("/api/auth/reset-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email,
+      newPassword
+    })
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+    alert("비밀번호가 성공적으로 변경되었습니다. 다시 로그인해 주세요.");
+    location.href = "login.html";
+  } else {
+    alert("비밀번호 변경 실패: " + data.message);
+  }
 }
 
 //엔터키 로그인

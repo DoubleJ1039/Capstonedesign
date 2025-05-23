@@ -69,16 +69,18 @@ body {
 
 #authButton {
   padding: 8px 14px;
-  background-color: #ff4d4d;
+  background-color: black;
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 14px;
+  font-weight: normal;
+  line-height: normal;
 }
-
 #authButton:hover {
-  background-color: #cc0000;
+  background-color: gray;
 }
 
 main {

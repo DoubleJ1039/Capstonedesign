@@ -21,7 +21,7 @@ public class EmailServiceImpl implements EmailService {
 
             helper.setFrom("pigduck31182@gmail.com");
             helper.setTo(toEmail);
-            helper.setSubject("[PAS] 이메일 인증 코드");
+            helper.setSubject("[SPAS] 이메일 인증 코드");
             helper.setText("인증 코드: " + code);
 
             mailSender.send(message);

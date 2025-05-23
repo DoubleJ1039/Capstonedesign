@@ -2,26 +2,38 @@ const API_URL = "/api";
 
 let currentImageTargetCode = null;
 
-document.addEventListener("DOMContentLoaded", () => {
-    const loggedInUser = localStorage.getItem("loggedInUser");
-    const userGreeting = document.getElementById("userGreeting");
+document.addEventListener("DOMContentLoaded", async () => {
+  const loggedInUser = localStorage.getItem("loggedInUser");
+  const userGreeting = document.getElementById("userGreeting");
 
-    if (!loggedInUser) {
-        alert("로그인 후 이용 가능합니다.");
-        window.location.href = "login.html";
-        return;
+  if (!loggedInUser) {
+    alert("로그인 후 이용 가능합니다.");
+    window.location.href = "login.html";
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/auth/user/info?email=${encodeURIComponent(loggedInUser)}`);
+    const data = await res.json();
+
+    if (data.success && userGreeting) {
+      userGreeting.style.display = "inline-block";
+      userGreeting.textContent = `안녕하세요 ${data.displayName} 님`;
     }
-
+  } catch (error) {
+    console.error("닉네임 불러오기 실패", error);
     if (userGreeting) {
-        userGreeting.style.display = "inline-block";
-        userGreeting.textContent = `안녕하세요 ${loggedInUser} 님`;
+      userGreeting.style.display = "inline-block";
+      userGreeting.textContent = `안녕하세요 ${loggedInUser} 님`;
     }
+  }
 
-    loadRooms(loggedInUser);
+  loadRooms(loggedInUser);
 
-    const imageInput = document.getElementById("imageInput");
-    imageInput.addEventListener("change", handleImageChange);
+  const imageInput = document.getElementById("imageInput");
+  imageInput.addEventListener("change", handleImageChange);
 });
+
 
 //이미지 변환
 async function handleImageChange(e) {
