@@ -32,6 +32,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupMobileChatSend();
 
   document.getElementById("submitAnswerBtn").addEventListener("click", submitAnswer);
+  document.getElementById("prevQuestionBtn").addEventListener("click", showPreviousQuestion);
 
   if (isHost) {
     document.getElementById("showResultBtn").addEventListener("click", async () => {
@@ -173,6 +174,8 @@ function renderQuestion() {
   document.getElementById("questionText").textContent = question.questionText || "문제 없음";
   document.getElementById("questionNumber").textContent = currentQuestionIndex + 1;
   document.getElementById("totalQuestions").textContent = questions.length;
+
+  updateNavigationButtons();
 
   const templateBg = question.templateImageName || "classic.png";
   const templateBox = document.getElementById("templateBackground");
@@ -1054,3 +1057,30 @@ document.getElementById("exitQuizBtn").addEventListener("click", () => {
     window.location.href = "/";
   }
 });
+
+// 이전 문제 버튼 클릭 이벤트 핸들러
+function showPreviousQuestion() {
+  if (currentQuestionIndex > 0) {
+    currentQuestionIndex--;
+    renderQuestion();
+    updateNavigationButtons();
+    sendQuestionIndex(currentQuestionIndex);
+  }
+}
+
+// 이전/다음 문제 버튼 표시 상태 업데이트
+function updateNavigationButtons() {
+  const prevBtn = document.getElementById("prevQuestionBtn");
+  const nextBtn = document.getElementById("nextQuestionBtn");
+  const resultBtn = document.getElementById("showResultBtn");
+
+  if (isHost) {
+    prevBtn.style.display = currentQuestionIndex > 0 ? "inline-block" : "none";
+    nextBtn.style.display = currentQuestionIndex < questions.length - 1 ? "inline-block" : "none";
+    resultBtn.style.display = currentQuestionIndex === questions.length - 1 ? "inline-block" : "none";
+  } else {
+    prevBtn.style.display = "none";
+    nextBtn.style.display = "none";
+    resultBtn.style.display = "none";
+  }
+}

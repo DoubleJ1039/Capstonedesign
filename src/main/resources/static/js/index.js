@@ -13,7 +13,6 @@ let currentIndex = 2;
 document.addEventListener("DOMContentLoaded", () => {
   initAuth();
   loadRooms();
-  initCarousel();
 });
 
 async function initAuth() {
@@ -130,69 +129,100 @@ function loadRooms() {
     .catch(err => console.error("방 목록 불러오기 오류:", err));
 }
 
-
+/* 소개 1 */
+const swiper = new Swiper('.swiper', {
+  loop: true, 
+  autoplay: {
+    delay: 2500,
+    disableOnInteraction: false,
+  },
+  slidesPerView: 3,
+  spaceBetween: 20,
+  breakpoints: {
+    320: {
+      slidesPerView: 1,
+      spaceBetween: 10,
+    },
+    480: {
+      slidesPerView: 2,
+      spaceBetween: 15,
+    },
+    769: {
+      slidesPerView: 3,
+      spaceBetween: 20,
+    }
+  }
+});
 /* ================================
    캐러셀 관련
 ================================ */
-function initCarousel() {
+document.addEventListener("DOMContentLoaded", () => {
   const track = document.getElementById("carousel-track");
-  for (let i = 0; i < 5; i++) {
-    const slide = document.createElement("div");
-    slide.className = "carousel-slide";
-    const img = document.createElement("img");
-    img.src = "";
-
-    img.addEventListener("click", (e) => {
-      const realIndex = parseInt(e.target.getAttribute("data-index"), 10);
-      if (!isNaN(realIndex)) {
-        currentIndex = realIndex;
-        updateCarousel();
-      }
-    });
-
-    slide.appendChild(img);
-    track.appendChild(slide);
-  }
-
   const prevBtn = document.querySelector(".carousel-button.prev");
   const nextBtn = document.querySelector(".carousel-button.next");
 
-  prevBtn.addEventListener("click", () => {
+  const imageSources = [
+  "images/banner1.png",
+  "images/banner2.png",
+  "images/banner3.png",
+  "images/banner4.png",
+  "images/banner5.png"
+];
 
-    currentIndex = (currentIndex - 1 + slidesData.length) % slidesData.length;
-    updateCarousel();
-  });
-  nextBtn.addEventListener("click", () => {
-    currentIndex = (currentIndex + 1) % slidesData.length;
-    updateCarousel();
-  });
-  updateCarousel();
-}
+  let currentIndex = 0;
 
-function updateCarousel() {
+  imageSources.forEach(src => {
+    const slide = document.createElement("div");
+    slide.className = "carousel-slide";
+    const img = document.createElement("img");
+    img.src = src;
+    img.alt = "슬라이드 이미지";
+    slide.appendChild(img);
+    track.appendChild(slide);
+  });
+
   const slides = document.querySelectorAll(".carousel-slide");
-  const rotatedArr = rotateArray(slidesData, currentIndex);
 
-  slides.forEach((slide, i) => {
-    const img = slide.querySelector("img");
-    img.src = rotatedArr[i];
-    const realIndex = slidesData.indexOf(rotatedArr[i]);
-    img.setAttribute("data-index", realIndex);
-    slide.classList.toggle("active", i === 2);
+  const updateSlidePosition = () => {
+    const offset = -currentIndex * 100;
+    track.style.transform = `translateX(${offset}%)`;
+  };
+
+  prevBtn.addEventListener("click", () => {
+    currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+    updateSlidePosition();
   });
-}
 
-function rotateArray(arr, centerIndex) {
-  const len = arr.length; // 5
-
-  const shift = 2 - centerIndex;
-
-  return arr.map((_, i) => {
-    return arr[(i - shift + len) % len];
+  nextBtn.addEventListener("click", () => {
+    currentIndex = (currentIndex + 1) % slides.length;
+    updateSlidePosition();
   });
-}
+
+  setInterval(() => {
+    currentIndex = (currentIndex + 1) % slides.length;
+    updateSlidePosition();
+  }, 5000);
+});
 
 function toggleMobileMenu() {
   const menu = document.getElementById('mobileMenu');
   menu.classList.toggle('active');
 }
+
+//swiper
+document.addEventListener('DOMContentLoaded', () => {
+      const swiper = new Swiper('.swiper', {
+        loop: true,
+        autoplay: {
+          delay: 3000,
+          disableOnInteraction: false,
+        },
+        slidesPerView: 'auto',
+        spaceBetween: 20,
+        breakpoints: {
+          769: {
+            slidesPerView: 3,
+          },
+        },
+      });
+    });

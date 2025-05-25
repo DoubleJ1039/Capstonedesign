@@ -4,7 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>방 참여 시스템</title>
+
   <link rel="stylesheet" href="css/index.css" />
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 </head>
 <body>
 
@@ -14,28 +18,25 @@
       <div class="nav-logo">
         <a href="index.html">SPAS</a>
       </div>
-        <div class="nav-controls">
-          <button id="loginTextButton" onclick="handleAuth()" class="mobile-only">login</button>
-          <button class="nav-toggle" onclick="toggleMobileMenu()">☰</button>
-        </div>
+      <div class="nav-controls">
+        <button id="loginTextButton" onclick="handleAuth()" class="mobile-only">login</button>
+        <button class="nav-toggle" onclick="toggleMobileMenu()">☰</button>
+      </div>
     </div>
 
-    <!-- 메뉴 영역 -->
     <div class="nav-center" id="mobileMenu">
       <ul class="nav-menu">
         <li><a href="roomop.html">방 설정</a></li>
         <li><a href="mypage.html">마이페이지</a></li>
         <li><a href="#">추가</a></li>
         <li><a href="#">추가</a></li>
-
-        <!-- 모바일 전용 로그인/로그아웃 버튼 -->
         <li class="mobile-auth">
           <button id="mobileAuthButton" onclick="handleAuth()">로그아웃</button>
         </li>
       </ul>
     </div>
 
-    <!-- 데스크톱 전용 로그인/로그아웃 버튼 -->
+    <!-- 로그인/로그아웃 -->
     <div class="nav-actions">
       <span id="userGreeting">안녕하세요, 사용자가름</span>
       <button id="authButton" onclick="handleAuth()">로그아웃</button>
@@ -45,11 +46,12 @@
   <!-- 캐러셀 -->
   <div class="carousel-container">
     <div class="carousel-track" id="carousel-track">
+      <!-- 슬라이드는 JS로 동적 삽입 -->
     </div>
     <button class="carousel-button prev">&lt;</button>
-    <button class="carousel-button next">&gt;</button>        
+    <button class="carousel-button next">&gt;</button>
   </div>
-    
+
   <!-- 메인 -->
   <main>
     <div class="main-sections">
@@ -67,27 +69,80 @@
     </div>
   </main>
 
-  <!-- 푸터 -->
-  <footer class="site-footer">
-    <div class="footer-icons">
-      <a href="https://discord.com/users/" target="_blank">
-        <img src="images/discord.png" alt="Discord" />
-      </a>
-      <a href="https://open.kakao.com/o/" target="_blank">
-        <img src="images/kakao.png" alt="Kakao" />
-      </a>
-      <a href="mailto:payaduck@naver.com">
-        <img src="images/mail.png" alt="Email" />
-      </a>
+  <!-- 소개 섹션 -->
+  <section class="intro">
+    <div class="swiper">
+      <div class="swiper-wrapper">
+        <div class="swiper-slide">
+          <i class="fas fa-users"></i>
+          <h1>Social</h1>
+          <p>스터디 그룹을 만들어 친구들과 함께 학습하고 퀴즈를 공유해 지식을 교류해요!</p>
+        </div>
+        <div class="swiper-slide">
+          <i class="fas fa-clipboard-list"></i>
+          <h1>Teacher Support</h1>
+          <p>수업 관리기능과 소통기능으로 간편히 학생들을 관리하고 소통해요!</p>
+        </div>
+        <div class="swiper-slide">
+          <i class="fas fa-comment-dots"></i>
+          <h1>Anonymous Bulletin Board</h1>
+          <p>부담없이 익명으로 많이 질문해요!</p>
+        </div>
+      </div>
     </div>
+  </section>
 
-    <div class="footer-content">
-      <p class="footer-text">© 2025 SPAS. All rights reserved.</p>
-      <p class="footer-text">개발 및 제작: 심지용, 박정재, 최건위, 심하경, 신동윤</p>
+  <section class="service">
+    <div class="container">
+      <div class="img">
+        <i class="fas fa-cloud"></i>
+      </div>
+      <div class="text">
+        <h1>SPAS</h1>
+        <p>
+          SPAS란 2025년 졸업프로젝트로 만들어지는 학습기반 웹서비스입니다.
+          인터넷이 발달하면서 대면보다 비대면 소통을 선호하는 사람들이 늘어나고 있습니다.
+          이러한 문제를 해결하기 위해 이 학습 서비스를 개발하게 되었습니다.
+        </p>
+        <button>더보기</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 푸터 -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-left">
+        <h1>SPAS</h1>
+        <p><a href="http://SPAS.com">http://SPAS.com</a></p>
+        <div class="footer-sns">
+          <a href="#"><i class="fab fa-twitter"></i></a>
+          <a href="#"><i class="fab fa-facebook-f"></i></a>
+          <a href="#"><i class="fab fa-instagram"></i></a>
+          <a href="#"><i class="fab fa-github"></i></a>
+        </div>
+      </div>
+
+      <div class="footer-center">
+        <h2>Contact Us</h2>
+        <p><i class="fas fa-envelope"></i> contact@spas.com</p>
+        <p><i class="fas fa-phone"></i> +82-10-1234-5678</p>
+        <p><i class="fas fa-map-marker-alt"></i> 충청남도 아산시 배방읍 호서로 79번길 20</p>
+      </div>
+
+      <div class="footer-right">
+        <h2>Quick Links</h2>
+        <ul>
+          <li><a href="#"><i class="fas fa-chevron-right"></i> 회사소개</a></li>
+          <li><a href="#"><i class="fas fa-chevron-right"></i> 이용약관</a></li>
+          <li><a href="#"><i class="fas fa-chevron-right"></i> 개인정보처리방침</a></li>
+          <li><a href="#"><i class="fas fa-chevron-right"></i> 고객센터</a></li>
+        </ul>
+      </div>
     </div>
   </footer>
 
-  <!-- 외부 JS 파일 -->
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
   <script src="js/index.js"></script>
 </body>
 </html>

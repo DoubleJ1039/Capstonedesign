@@ -55,6 +55,7 @@
           <!-- 상단 컨트롤 -->
           <div id="topControls" class="top-controls-inside" style="display: none;">
             <button id="exitQuizBtn" class="exit-btn">퀴즈 나가기</button>
+            <button id="prevQuestionBtn" style="display: none;">← 이전 문제</button>
             <button id="nextQuestionBtn" style="display: none;">다음 문제 →</button>
             <button id="showResultBtn" style="display: none;">결과 보기</button>
             <div id="questionNumberBox">
@@ -65,6 +66,11 @@
 
           <div id="templateBackground" class="template-background">
 
+            <!-- 타이머 -->
+            <div id="timerBox">
+              <span id="timerText">00</span>
+            </div>
+
             <!-- 문제 텍스트 -->
             <div class="question-title-box">
               <h2 id="questionText">문제 로딩 중...</h2>
@@ -73,9 +79,6 @@
             <!-- 문제 이미지 -->
             <div class="question-image-box">
               <img id="questionImage" src="" alt="문제 이미지" />
-              <div id="timerBox">
-                <span id="timerText">00</span>
-              </div>
             </div>
 
             <!-- 선택지 -->

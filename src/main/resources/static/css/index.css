@@ -74,11 +74,9 @@ body {
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  font-family: 'Segoe UI', sans-serif;
-  font-size: 14px;
-  font-weight: normal;
-  line-height: normal;
+  transition: background-color 0.2s;
 }
+
 #authButton:hover {
   background-color: gray;
 }
@@ -102,7 +100,7 @@ main {
 #room-list {
   width: 350px;
   min-width: 300px;
-  background-color: #FFF9C4;
+  background-color: #ddd;
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
@@ -134,7 +132,7 @@ input[type="password"] {
 
 button {
   padding: 10px 18px;
-  background-color: #BFD8E2;
+  background-color: #444;
   color: white;
   border: none;
   cursor: pointer;
@@ -170,84 +168,164 @@ button:hover {
   color: #888;
 }
 
+/* 캐러셀 컨테이너 */
 .carousel-container {
-  background-color: #FFF9C4;
-  border-radius: 36px;
-  padding: 20px;
-  max-width: 1000px;
-  height: 330px;
-  margin: 60px auto;
-  overflow: hidden;
   position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 1080px;
+  margin: 40px auto 0;
 }
 
+/* 슬라이드 트랙 */
 .carousel-track {
   display: flex;
-  height: 100%;
+  transition: transform 0.5s ease-in-out;
+}
+
+/* 슬라이드 하나 */
+.carousel-slide {
+  flex: 0 0 100%;
+  display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.carousel-slide {
-  flex: 0 0 200px;
-  height: 240px;
-  margin: 0 15px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-  transition: transform 0.4s, flex 0.4s, height 0.4s, opacity 0.4s;
-  overflow: hidden;
-  transform: scale(0.85);
-  opacity: 0.6;
-}
-
-.carousel-slide.active {
-  flex: 0 0 240px;
-  height: 300px;
-  transform: scale(1.1);
-  z-index: 2;
-  opacity: 1;
-}
-
 .carousel-slide img {
   width: 100%;
-  height: 100%;
+  height: auto;
   object-fit: cover;
-  display: block;
-  border-radius: 10px;
 }
 
+/* 캐러셀 버튼 스타일 */
 .carousel-button {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: white;
-  border: 1px solid #ccc;
-  font-size: 32px;
-  font-weight: bold;
-  color: #333;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  cursor: pointer;
   z-index: 10;
-  padding: 0;
-  line-height: 40px;
-  text-align: center;
-  transition: background-color 0.2s;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  border: none;
+  font-size: 20px;
+  padding: 12px;
+  cursor: pointer;
 }
+.carousel-button.prev { left: 10px; }
+.carousel-button.next { right: 10px; }
 
 .carousel-button:hover {
-  background-color: #f0f0f0;
+  background-color: rgba(0, 0, 0, 0.6);
+  transform: translateY(-50%);
 }
 
-.carousel-button.prev {
-  left: 5px;
+/* 푸터 */
+.footer {
+  background: #222;
+  padding: 40px 0;
+  color: #eee;
+  font-size: 16px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.carousel-button.next {
-  right: 5px;
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: nowrap; 
+  gap: 30px;
+  justify-content: space-between;
+  padding: 0 20px;
 }
+
+.footer-left,
+.footer-center,
+.footer-right {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.footer a {
+  color: #ccc;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer a:hover {
+  color: #1e90ff;
+}
+
+.footer-sns a {
+  margin-right: 10px;
+  font-size: 24px;
+  padding: 6px;
+  border-radius: 50%;
+  background: #444;
+  display: inline-block;
+  transition: background-color 0.3s ease;
+}
+
+.footer-sns a:hover {
+  background: #1e90ff;
+  color: #fff;
+}
+
+.footer-center p,
+.footer-right ul {
+  margin: 8px 0;
+}
+
+.footer-right ul {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-right ul li {
+  margin-bottom: 8px;
+}
+
+/* 데스크탑 */
+@media screen and (min-width: 769px) {
+  .carousel-container {
+    height: 540px;
+  }
+
+  .carousel-slide {
+    width: 1080px;
+    height: 540px;
+  }
+
+  .carousel-slide img {
+    width: 1080px;
+    height: 540px;
+    object-fit: cover;
+  }
+}
+
+/* 모바일 대응 */
+@media (max-width: 768px) {
+  .carousel-track {
+    display: flex;
+    gap: 60px; /* 원하는 간격으로 조절 */
+    transition: transform 0.5s ease-in-out;
+  }
+
+  .carousel-slide {
+    flex: 0 0 100%; /* 모바일에서 한 슬라이드만 보이게 */
+    box-sizing: border-box;
+  }
+
+  .carousel-slide img {
+    width: 100%;
+    object-fit: contain;
+  }
+
+    .carousel-slide:first-child {
+    margin-left: 40px;
+  }
+
+}
+
+
 
 .site-footer {
   background-color: #ffffff;
@@ -490,5 +568,195 @@ button:hover {
   .footer-text {
     margin: 4px 0;
     line-height: 1.5;
+  }
+}
+
+/* 소개1 카드 (슬라이더 / 추가) */
+.intro {
+  margin: 20px auto 0; /* 좌우 중앙 정렬 */
+  max-width: 1200px;
+  display: flex;
+  justify-content: center;
+  overflow: hidden; /* 가로 스크롤 숨김 */
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+
+.intro .swiper {
+  width: 100%;
+  max-width: 980px; /* 슬라이더 최대 너비 */
+  padding: 10px 0; /* 상하 여백 */
+  box-sizing: border-box;
+}
+
+.intro .swiper-wrapper {
+  display: flex;
+  align-items: stretch; /* 높이를 맞추기 위해 */
+}
+
+.intro .swiper-slide {
+  flex: 0 0 300px !important;
+  /* 높이는 auto로 바꾸고 위/아래 패딩 조절로 여백 맞춤 */
+  height: auto;
+  box-sizing: border-box;
+  margin: 0 10px;
+  padding: 20px 20px 35px 20px; /* 위:20px, 오른쪽:20px, 아래:35px, 왼쪽:20px */
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+
+  text-align: center;
+  font-size: 16px;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* 아이콘 크기 고정 (추가) */
+.intro .swiper-slide i {
+  font-size: 3rem;
+  color: #444;
+  margin-bottom: 15px;
+  flex-shrink: 0;
+}
+
+/* 제목과 문단 여백 조절 (추가) */
+.intro .swiper-slide h1 {
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+.intro .swiper-slide p {
+  text-align: center;
+  flex-grow: 1; /* 내용이 늘어도 카드 높이 유지 */
+  overflow-wrap: break-word;
+}
+
+/* 모바일 대응 (추가) */
+@media screen and (max-width: 768px) {
+  .intro {
+    padding: 0 5px;
+  }
+
+  .intro .swiper-slide {
+    flex: 0 0 260px !important; /* 모바일 너비 260px */
+    height: auto; /* 높이 자동 조절 */
+    padding: 15px;
+  }
+}
+
+/* 소개2 서비스 (추가) */
+/* 기본 스타일 유지 (데스크탑용) */
+.service {
+  background: #ddd;
+  padding: 50px 0;
+  margin-top: 60px;       /* 위쪽 여백 추가 */
+  margin-bottom: 60px;    /* 아래쪽 여백 유지 */
+}
+.service .container {
+  display: flex;
+  justify-content: space-between;
+  max-width: 1000px;
+  margin: auto;
+}
+.service .img {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 300px;
+  height: 300px;
+  background: white;
+}
+.service .img i {
+  font-size: 120px;
+  color: #444;
+}
+.service .text {
+  padding-left: 50px;
+  max-width: 500px;
+}
+.service .text h1 {
+  margin-bottom: 15px;
+}
+.service .text p {
+  line-height: 1.6;
+}
+.service .text button {
+  background: black;
+  color: white;
+  border: 2px solid white;
+  padding: 5px 15px;
+  transition: 0.5s ease;
+}
+.service .text button:hover {
+  background: transparent;
+  color: black;
+  border: 2px solid black;
+}
+
+/* 모바일 대응 (추가)*/
+@media screen and (max-width: 768px) {
+  .service {
+    padding: 30px 0;      /* 위아래 패딩을 줄임 */
+    margin-top: 60px;       /* 위쪽 여백 추가 */
+    margin-bottom: 60px;  /* 아래쪽 여백 유지 */
+  }
+
+  .service .container {
+    flex-direction: column;
+    align-items: center;
+    padding: 0 20px;
+  }
+
+  .service .img {
+    display: none;        /* 아이콘 숨기기 */
+  }
+
+  .service .text {
+    padding-left: 0;
+    max-width: 100%;
+    text-align: center;
+    margin-top: 0;        /* 텍스트 위쪽 여백 줄임 */
+    margin-bottom: 0;     /* 텍스트 아래쪽 여백 줄임 */
+  }
+
+  .service .text h1 {
+    margin-bottom: 10px;  /* 제목 아래 여백 조절 */
+  }
+
+    .footer {
+    padding: 20px 10px;
+    font-size: 12px;
+  }
+
+  .footer-container {
+    gap: 15px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .footer-left,
+  .footer-center,
+  .footer-right {
+    min-width: 180px;
+    flex: 0 0 auto;
+  }
+
+  .footer-sns a {
+    font-size: 20px;
+    margin-right: 8px;
+    padding: 4px;
+  }
+
+  .footer-content {
+    margin-top: 20px;
+    font-size: 11px;
   }
 }
