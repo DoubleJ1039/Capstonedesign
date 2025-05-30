@@ -6,15 +6,19 @@ import com.example.pas.repositories.RoomRepository;
 import com.example.pas.repositories.UserRepository;
 import com.example.pas.models.CloudinaryService;
 import com.example.pas.services.EmailService;
+import com.example.pas.util.jwtutil;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.apache.commons.lang3.tuple.Pair;
-import java.util.concurrent.ConcurrentHashMap;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import jakarta.servlet.http.HttpServletRequest;
+import io.jsonwebtoken.Jwts;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -36,7 +40,11 @@ public class AuthController {
     @Autowired
     private CloudinaryService cloudinaryService;
 
+    @Autowired
+    private jwtutil jwtUtil;
+
     private final Map<String, Pair<String, Long>> emailCodeStorage = new ConcurrentHashMap<>();
+    private final Map<String, Long> lastSentMap = new ConcurrentHashMap<>();
 
     @GetMapping("/user/info")
     public ResponseEntity<Map<String, Object>> getUserInfo(@RequestParam String email) {
@@ -68,8 +76,7 @@ public class AuthController {
             return ResponseEntity.badRequest().body(response);
         }
 
-        Optional<User> existingUser = userRepository.findByEmail(email);
-        if (existingUser.isPresent()) {
+        if (userRepository.findByEmail(email).isPresent()) {
             response.put("success", false);
             response.put("message", "이미 등록된 이메일입니다.");
             return ResponseEntity.badRequest().body(response);
@@ -77,7 +84,6 @@ public class AuthController {
 
         String encodedPassword = passwordEncoder.encode(password);
         User newUser = new User(email, encodedPassword, displayName);
-
         userRepository.save(newUser);
 
         response.put("success", true);
@@ -86,7 +92,10 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> user) {
+    public ResponseEntity<Map<String, Object>> login(
+            @RequestBody Map<String, String> user,
+            HttpServletResponse responseHttp) {
+
         Map<String, Object> response = new HashMap<>();
         String email = user.get("email");
         String rawPassword = user.get("password");
@@ -95,6 +104,17 @@ public class AuthController {
         if (foundUser.isPresent()) {
             String hashedPassword = foundUser.get().getPassword();
             if (passwordEncoder.matches(rawPassword, hashedPassword)) {
+                String token = jwtUtil.generateToken(email);
+                System.out.println("✅ JWT 발급: " + token);
+
+                Cookie cookie = new Cookie("access_token", token);
+                cookie.setHttpOnly(true);
+                cookie.setPath("/");
+                cookie.setMaxAge(30 * 60);
+                cookie.setSecure(false);
+
+                responseHttp.addCookie(cookie);
+
                 response.put("success", true);
                 response.put("message", "로그인 성공!");
                 return ResponseEntity.ok(response);
@@ -104,6 +124,50 @@ public class AuthController {
         response.put("success", false);
         response.put("message", "이메일 또는 비밀번호가 틀립니다.");
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/refresh-token")
+    public ResponseEntity<Map<String, Object>> refreshToken(HttpServletRequest request, HttpServletResponse response) {
+        Map<String, Object> result = new HashMap<>();
+
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("access_token".equals(cookie.getName())) {
+                    String oldToken = cookie.getValue();
+
+                    try {
+                        String email = Jwts.parserBuilder()
+                                .setSigningKey(jwtUtil.getSigningKey())
+                                .build()
+                                .parseClaimsJws(oldToken)
+                                .getBody()
+                                .getSubject();
+                        String newToken = jwtUtil.generateToken(email);
+                        Cookie newCookie = new Cookie("access_token", newToken);
+                        newCookie.setHttpOnly(true);
+                        newCookie.setSecure(true);
+                        newCookie.setPath("/");
+                        newCookie.setMaxAge(60 * 30);
+
+                        response.addCookie(newCookie);
+
+                        result.put("success", true);
+                        result.put("message", "토큰 갱신 성공");
+                        return ResponseEntity.ok(result);
+
+                    } catch (Exception e) {
+                        result.put("success", false);
+                        result.put("message", "토큰이 유효하지 않음");
+                        return ResponseEntity.status(401).body(result);
+                    }
+                }
+            }
+        }
+
+        result.put("success", false);
+        result.put("message", "쿠키에 토큰이 없음");
+        return ResponseEntity.status(401).body(result);
     }
 
     @PostMapping("/check-email")
@@ -122,8 +186,6 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    private final Map<String, Long> lastSentMap = new ConcurrentHashMap<>();
-
     @PostMapping("/send-email-code")
     public ResponseEntity<Map<String, Object>> sendEmailCode(@RequestBody Map<String, String> request) {
         Map<String, Object> response = new HashMap<>();
@@ -140,8 +202,8 @@ public class AuthController {
         String code = generateCode();
         emailCodeStorage.put(email, Pair.of(code, now));
         emailService.sendVerificationCode(email, code);
-
         lastSentMap.put(email, now);
+
         response.put("success", true);
         return ResponseEntity.ok(response);
     }
@@ -163,35 +225,27 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    // 비밀번호 확인
     @PostMapping("/verify-password")
     public ResponseEntity<Map<String, Object>> verifyPassword(@RequestBody Map<String, String> req) {
+        Map<String, Object> response = new HashMap<>();
         String email = req.get("email");
         String password = req.get("password");
 
         Optional<User> user = userRepository.findByEmail(email);
-        Map<String, Object> response = new HashMap<>();
-
-        if (user.isPresent() && passwordEncoder.matches(password, user.get().getPassword())) {
-            response.put("valid", true);
-        } else {
-            response.put("valid", false);
-        }
+        boolean valid = user.isPresent() && passwordEncoder.matches(password, user.get().getPassword());
+        response.put("valid", valid);
 
         return ResponseEntity.ok(response);
     }
 
-    // 비밀번호 변경
     @PostMapping("/change-password")
     public ResponseEntity<Map<String, Object>> changePassword(@RequestBody Map<String, String> request) {
         Map<String, Object> response = new HashMap<>();
-
         String email = request.get("email");
         String currentPassword = request.get("currentPassword");
         String newPassword = request.get("newPassword");
 
         Optional<User> userOpt = userRepository.findByEmail(email);
-
         if (userOpt.isEmpty()) {
             response.put("success", false);
             response.put("message", "사용자를 찾을 수 없습니다.");
@@ -199,15 +253,13 @@ public class AuthController {
         }
 
         User user = userOpt.get();
-
         if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
             response.put("success", false);
             response.put("message", "현재 비밀번호가 일치하지 않습니다.");
             return ResponseEntity.badRequest().body(response);
         }
 
-        String hashedNewPw = passwordEncoder.encode(newPassword);
-        user.setPassword(hashedNewPw);
+        user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
         response.put("success", true);
@@ -215,13 +267,11 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    // 비밀번호 초기화
     @PostMapping("/reset-password")
     public ResponseEntity<Map<String, Object>> resetPassword(@RequestBody Map<String, String> req) {
+        Map<String, Object> response = new HashMap<>();
         String email = req.get("email");
         String newPassword = req.get("newPassword");
-
-        Map<String, Object> response = new HashMap<>();
 
         Optional<User> userOpt = userRepository.findByEmail(email);
         if (userOpt.isEmpty()) {
@@ -231,8 +281,7 @@ public class AuthController {
         }
 
         User user = userOpt.get();
-        String hashedNewPw = passwordEncoder.encode(newPassword);
-        user.setPassword(hashedNewPw);
+        user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
         response.put("success", true);
@@ -240,20 +289,13 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    // 닉네임 검사
     @GetMapping("/check-nickname")
     public ResponseEntity<Map<String, Object>> checkNickname(@RequestParam String name) {
         Map<String, Object> response = new HashMap<>();
-        boolean exists = userRepository.existsByDisplayName(name);
-        response.put("exists", exists);
+        response.put("exists", userRepository.existsByDisplayName(name));
         return ResponseEntity.ok(response);
     }
 
-    private String generateCode() {
-        return UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-    }
-
-    // 닉네임 변경
     @PostMapping("/change-nickname")
     public ResponseEntity<Map<String, Object>> changeNickname(@RequestBody Map<String, String> request) {
         Map<String, Object> response = new HashMap<>();
@@ -266,8 +308,7 @@ public class AuthController {
             return ResponseEntity.badRequest().body(response);
         }
 
-        boolean exists = userRepository.existsByDisplayName(newNickname);
-        if (exists) {
+        if (userRepository.existsByDisplayName(newNickname)) {
             response.put("success", false);
             response.put("message", "이미 사용 중인 닉네임입니다.");
             return ResponseEntity.badRequest().body(response);
@@ -289,7 +330,6 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    // 회원탈퇴
     @PostMapping("/delete")
     public ResponseEntity<Map<String, Object>> deleteUser(@RequestBody Map<String, String> request) {
         Map<String, Object> response = new HashMap<>();
@@ -310,10 +350,15 @@ public class AuthController {
             }
             roomRepository.delete(room);
         }
+
         userRepository.deleteById(userOpt.get().getId());
+
         response.put("success", true);
         response.put("message", "회원 탈퇴 및 이미지, 생성한 방 삭제 완료");
         return ResponseEntity.ok(response);
     }
 
+    private String generateCode() {
+        return UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
 }

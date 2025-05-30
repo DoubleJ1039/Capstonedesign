@@ -1,6 +1,6 @@
 const API_URL = "/api/auth";
 
-function login() {
+async function login() {
     const email = document.getElementById("login-email").value;
     const password = document.getElementById("login-password").value;
 
@@ -9,22 +9,26 @@ function login() {
         return;
     }
 
-    fetch(`${API_URL}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-    })
-    .then(response => response.json())
-    .then(data => {
+    try {
+        const response = await fetch(`${API_URL}/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
         if (data.success) {
             alert("로그인 성공!");
-            localStorage.setItem("loggedInUser", email);
+            await storeEncryptedEmail(email);
+             localStorage.setItem("loggedInUser", data.displayName);
             window.location.href = "index.html";
         } else {
             alert("로그인 실패: " + data.message);
         }
-    })
-    .catch(error => console.error("로그인 오류:", error));
+    } catch (error) {
+        console.error("로그인 오류:", error);
+    }
 }
 
 //회원가입
@@ -281,6 +285,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 function logout() {
+  sessionStorage.removeItem("userEmail");
     localStorage.removeItem("loggedInUser");
     alert("로그아웃되었습니다.");
     location.reload();

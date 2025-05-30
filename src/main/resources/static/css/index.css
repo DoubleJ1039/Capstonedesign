@@ -142,7 +142,7 @@ button {
 }
 
 button:hover {
-  background-color: #A6C8D7;
+  background-color: gray;
   transform: scale(1.02);
 }
 
@@ -571,36 +571,34 @@ button:hover {
   }
 }
 
-/* 소개1 카드 (슬라이더 / 추가) */
 .intro {
-  margin: 20px auto 0; /* 좌우 중앙 정렬 */
+  margin: 20px auto 0;
   max-width: 1200px;
   display: flex;
   justify-content: center;
-  overflow: hidden; /* 가로 스크롤 숨김 */
+  overflow: hidden;
   padding: 0 10px;
   box-sizing: border-box;
 }
 
 .intro .swiper {
   width: 100%;
-  max-width: 980px; /* 슬라이더 최대 너비 */
-  padding: 10px 0; /* 상하 여백 */
+  max-width: 980px;
+  padding: 10px 0;
   box-sizing: border-box;
 }
 
 .intro .swiper-wrapper {
   display: flex;
-  align-items: stretch; /* 높이를 맞추기 위해 */
+  align-items: stretch;
 }
 
 .intro .swiper-slide {
   flex: 0 0 300px !important;
-  /* 높이는 auto로 바꾸고 위/아래 패딩 조절로 여백 맞춤 */
   height: auto;
   box-sizing: border-box;
   margin: 0 10px;
-  padding: 20px 20px 35px 20px; /* 위:20px, 오른쪽:20px, 아래:35px, 왼쪽:20px */
+  padding: 20px 20px 35px 20px;
 
   display: flex;
   flex-direction: column;
@@ -619,7 +617,6 @@ button:hover {
   text-rendering: optimizeLegibility;
 }
 
-/* 아이콘 크기 고정 (추가) */
 .intro .swiper-slide i {
   font-size: 3rem;
   color: #444;
@@ -627,7 +624,6 @@ button:hover {
   flex-shrink: 0;
 }
 
-/* 제목과 문단 여백 조절 (추가) */
 .intro .swiper-slide h1 {
   margin-bottom: 10px;
   flex-shrink: 0;
@@ -635,30 +631,15 @@ button:hover {
 
 .intro .swiper-slide p {
   text-align: center;
-  flex-grow: 1; /* 내용이 늘어도 카드 높이 유지 */
+  flex-grow: 1;
   overflow-wrap: break-word;
 }
 
-/* 모바일 대응 (추가) */
-@media screen and (max-width: 768px) {
-  .intro {
-    padding: 0 5px;
-  }
-
-  .intro .swiper-slide {
-    flex: 0 0 260px !important; /* 모바일 너비 260px */
-    height: auto; /* 높이 자동 조절 */
-    padding: 15px;
-  }
-}
-
-/* 소개2 서비스 (추가) */
-/* 기본 스타일 유지 (데스크탑용) */
 .service {
   background: #ddd;
   padding: 50px 0;
-  margin-top: 60px;       /* 위쪽 여백 추가 */
-  margin-bottom: 60px;    /* 아래쪽 여백 유지 */
+  margin-top: 60px;
+  margin-bottom: 60px;
 }
 .service .container {
   display: flex;
@@ -701,12 +682,22 @@ button:hover {
   border: 2px solid black;
 }
 
-/* 모바일 대응 (추가)*/
+/* 모바일 대응 */
 @media screen and (max-width: 768px) {
+  .intro {
+    padding: 0 5px;
+  }
+
+  .intro .swiper-slide {
+    flex: 0 0 260px !important;
+    height: auto;
+    padding: 15px;
+  }
+
   .service {
-    padding: 30px 0;      /* 위아래 패딩을 줄임 */
-    margin-top: 60px;       /* 위쪽 여백 추가 */
-    margin-bottom: 60px;  /* 아래쪽 여백 유지 */
+    padding: 30px 0;
+    margin-top: 60px;
+    margin-bottom: 60px;
   }
 
   .service .container {
@@ -716,19 +707,19 @@ button:hover {
   }
 
   .service .img {
-    display: none;        /* 아이콘 숨기기 */
+    display: none;
   }
 
   .service .text {
     padding-left: 0;
     max-width: 100%;
     text-align: center;
-    margin-top: 0;        /* 텍스트 위쪽 여백 줄임 */
-    margin-bottom: 0;     /* 텍스트 아래쪽 여백 줄임 */
+    margin-top: 0;
+    margin-bottom: 0;
   }
 
   .service .text h1 {
-    margin-bottom: 10px;  /* 제목 아래 여백 조절 */
+    margin-bottom: 10px;
   }
 
     .footer {

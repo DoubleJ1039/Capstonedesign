@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", async () => {
-  const email = localStorage.getItem("loggedInUser");
+  const email = await getDecryptedEmail();
   if (!email) {
     alert("로그인이 필요합니다.");
     location.href = "login.html";
@@ -22,8 +22,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-//로그아웃
 function handleLogout() {
+  sessionStorage.removeItem("userEmail");
   localStorage.removeItem("loggedInUser");
   alert("로그아웃되었습니다.");
   window.location.href = "index.html";
@@ -35,7 +35,7 @@ function showDeletePasswordInput() {
 }
 
 async function verifyDeletePassword() {
-  const email = localStorage.getItem("loggedInUser");
+  const email = await getDecryptedEmail();
   const password = document.getElementById("delete-password").value;
   const errorBox = document.getElementById("delete-error");
 
@@ -62,6 +62,7 @@ async function verifyDeletePassword() {
 
     if (deleteResult.success) {
       alert("탈퇴가 완료되었습니다.");
+      sessionStorage.removeItem("userEmail");
       localStorage.removeItem("loggedInUser");
       location.href = "login.html";
     } else {
@@ -78,7 +79,7 @@ function showCurrentPasswordInput() {
 }
 
 async function verifyCurrentPassword() {
-  const email = localStorage.getItem("loggedInUser");
+  const email = await getDecryptedEmail();
   const current = document.getElementById("current-password").value;
 
   const res = await fetch("/api/auth/verify-password", {
@@ -99,7 +100,6 @@ async function verifyCurrentPassword() {
   }
 }
 
-//비밀번호 변경
 function validateNewPassword() {
   const pw = document.getElementById("new-password").value;
   const feedback = document.getElementById("pw-feedback");
@@ -115,7 +115,7 @@ function validateNewPassword() {
 }
 
 async function submitNewPassword() {
-  const email = localStorage.getItem("loggedInUser");
+  const email = await getDecryptedEmail();
   const current = document.getElementById("current-password").value;
   const newPw = document.getElementById("new-password").value;
   const confirmPw = document.getElementById("confirm-password").value;
@@ -151,7 +151,7 @@ function showNicknamePasswordInput() {
 }
 
 async function verifyNicknamePassword() {
-  const email = localStorage.getItem("loggedInUser");
+  const email = await getDecryptedEmail();
   const password = document.getElementById("nickname-password").value;
   const errorText = document.getElementById("nickname-step2-error");
 
@@ -172,7 +172,6 @@ async function verifyNicknamePassword() {
   }
 }
 
-//닉네임 변경
 async function checkNicknameDuplicate() {
   const newNickname = document.getElementById("new-nickname").value.trim();
   const feedback = document.getElementById("nickname-check-feedback");
@@ -209,9 +208,8 @@ async function checkNicknameDuplicate() {
   }
 }
 
-
 async function submitNewNickname() {
-  const email = localStorage.getItem("loggedInUser");
+  const email = await getDecryptedEmail();
   const newNickname = document.getElementById("new-nickname").value;
 
   const res = await fetch("/api/auth/change-nickname", {
@@ -230,7 +228,6 @@ async function submitNewNickname() {
   }
 }
 
-//모바일 토글
 function toggleMobileMenu() {
   const menu = document.getElementById("mobileMenu");
   menu.classList.toggle("active");

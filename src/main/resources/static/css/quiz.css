@@ -326,6 +326,17 @@ html, body {
   border-radius: 60px 60px 65px 65px;
 }
 
+/* OX 선택지 컨테이너 스타일 추가 */
+.choice-count-2.ox-choices {
+  /* OX 선택지를 가로로 배치하기 위한 Flexbox 설정 */
+  display: flex !important;
+  justify-content: center;
+  /* OX 버튼 사이의 간격 설정 */
+  gap: 40px;
+  /* 기존 grid 레이아웃 설정 무시 */
+  grid-template-columns: none !important;
+}
+
 /* 주관식 입력 */
 .sentence-box {
   position: relative;
@@ -634,40 +645,47 @@ canvas {
     font-size: 16px;
   }
 
+  /* 모바일에서 객관식 보기 1열 배치 설정 */
   .choices-list {
     grid-gap: 15px;
     margin-top: 0.5cm;
     padding: 0 10px;
+    /* 모든 선택지를 1열로 강제 변경 */
+    grid-template-columns: 1fr !important;
   }
 
-  .choice-item {
-    width: 100%;
-    height: auto;
-    min-height: 80px;
-    font-size: 16px;
-    padding: 10px;
+  /* 2개, 3개, 4개 보기 모두 1열로 통일 */
+  .choice-count-2,
+  .choice-count-3,
+  .choice-count-4 {
+    grid-template-columns: 1fr !important;
+    /* 기존 grid-area 레이아웃 해제 */
+    grid-template-areas: none !important;
   }
 
-  .choice-text {
-    margin-left: 50px;
-    width: calc(100% - 60px);
-    font-size: 14px;
-    line-height: 1.4;
-    max-height: none;
-    -webkit-line-clamp: 3;
-    padding: 5px 0;
+  /* 3개 보기일 때 사용하던 특별 배치 해제 */
+  .choice-count-3 li:nth-child(1),
+  .choice-count-3 li:nth-child(2),
+  .choice-count-3 li:nth-child(3) {
+    grid-area: auto !important;
   }
 
-  .choice-item.selected::after {
-    top: 15px;
-    left: 15px;
-    width: 30px;
-    height: 30px;
+  /* 모바일에서 OX 버튼 크기 최적화 */
+  .ox-choice-item {
+    /* 모바일에 맞게 크기 축소 */
+    width: 120px;
+    height: 120px;
+    /* 상단 여백 조정 */
+    margin-top: 1cm;
   }
 
-  .choices-container {
-    margin-top: 10px;
-    padding: 0 10px;
+  /* 모바일에서 OX 선택지 가로 배치 유지 */
+  .choice-count-2.ox-choices {
+    display: flex !important;
+    justify-content: center;
+    /* 모바일에서는 간격을 좁게 조정 */
+    gap: 20px;
+    grid-template-columns: none !important;
   }
 
   .chat-messages {
@@ -944,5 +962,19 @@ canvas {
 #questionNumberBox {
   padding: 6px 12px;
   font-size: 12px;
+}
+
+.ox-choice-item {
+  width: 120px;
+  height: 120px;
+  margin-top: 1cm;
+}
+
+/* 모바일에서도 OX 선택지 가로 배치 유지 */
+.choice-count-2.ox-choices {
+  display: flex !important;
+  justify-content: center;
+  gap: 20px;
+  grid-template-columns: none !important;
 }
 }

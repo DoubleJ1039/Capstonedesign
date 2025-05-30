@@ -42,7 +42,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-
 async function fetchRoomStatus() {
   const res = await fetch(`${API_URL}/rooms/status?code=${roomCode}`);
   const data = await res.json();
@@ -50,7 +49,7 @@ async function fetchRoomStatus() {
   if (!data.success) return;
 
   const isQuizStarted = data.isStarted;
-  const userEmail = localStorage.getItem("loggedInUser");
+  const userEmail = await getDecryptedEmail();
 
   const infoRes = await fetch(`${API_URL}/rooms/info?code=${roomCode}`);
   const infoData = await infoRes.json();
@@ -75,13 +74,12 @@ async function fetchRoomStatus() {
     document.getElementById("quizScreen").style.display = "none";
   }
 }
-
-
 function setupLobbyEvents() {
   document.getElementById("confirmNicknameBtn").addEventListener("click", async () => {
     const nickname = document.getElementById("nicknameInput").value.trim();
-    const userEmail = localStorage.getItem("loggedInUser");
     const password = localStorage.getItem("roomPassword") || "";
+
+    const userEmail = await getDecryptedEmail();
 
     if (!nickname || !userEmail) {
       alert("닉네임 또는 로그인 정보가 없습니다.");
@@ -112,7 +110,7 @@ function setupLobbyEvents() {
     const res = await fetch(`${API_URL}/rooms/start/${roomCode}`, {
       method: "PUT"
     });
-  
+
     const data = await res.json();
     if (data.success) {
       showQuizScreen();
@@ -126,11 +124,10 @@ function setupLobbyEvents() {
           type: "startQuiz"
         }));
       }
-  
     } else {
       alert("퀴즈 시작에 실패했습니다.");
     }
-  });  
+  });
 }
 
 function startLobbyPolling() {
@@ -197,7 +194,7 @@ function renderQuestion() {
   shortBox.style.display = "none";
 
   if (question.type === "ox") {
-    choicesList.className = "choices-list choice-count-2";
+    choicesList.className = "choices-list choice-count-2 ox-choices";
 
     ["O", "X"].forEach((label) => {
       const li = document.createElement("li");
@@ -317,34 +314,34 @@ document.getElementById("quizStartControlBtn").addEventListener("click", async (
 });
 
 
-  async function fetchRoomData() {
-    const res = await fetch(`${API_URL}/rooms/info?code=${roomCode}`);
-    const data = await res.json();
-  
-    if (!data.success) {
-      alert("방 정보를 불러오는 데 실패했습니다.");
-      return;
-    }
-  
-    questions = data.testQuestions || [];
-    professorEmail = data.professorEmail;
-    currentQuestionIndex = data.currentQuestionIndex || 0;
-  
-    const userEmail = localStorage.getItem("loggedInUser");
-    isHost = userEmail && userEmail === professorEmail;
-  
-    if (isHost) {
-      document.getElementById("startQuizBtn").style.display = "inline-block";
-    } else {
-      document.getElementById("startQuizBtn").style.display = "none";
-    }
-  
-    renderQuestion();
-  
-    const now = Date.now();
-    const remainTime = Math.floor((data.endTime - now) / 1000);
-    startTimer(remainTime, data.endTime);
-  }  
+async function fetchRoomData() {
+  const res = await fetch(`${API_URL}/rooms/info?code=${roomCode}`);
+  const data = await res.json();
+
+  if (!data.success) {
+    alert("방 정보를 불러오는 데 실패했습니다.");
+    return;
+  }
+
+  questions = data.testQuestions || [];
+  professorEmail = data.professorEmail;
+  currentQuestionIndex = data.currentQuestionIndex || 0;
+
+  const userEmail = await getDecryptedEmail();
+  isHost = userEmail && userEmail === professorEmail;
+
+  if (isHost) {
+    document.getElementById("startQuizBtn").style.display = "inline-block";
+  } else {
+    document.getElementById("startQuizBtn").style.display = "none";
+  }
+
+  renderQuestion();
+
+  const now = Date.now();
+  const remainTime = Math.floor((data.endTime - now) / 1000);
+  startTimer(remainTime, data.endTime);
+}
 
 function connectWebSocket() {
   const socket = new SockJS("/ws");
@@ -369,12 +366,10 @@ function connectWebSocket() {
       showQuizScreen();
     }
 
-    // 메시지 수신 구독
     stompClient.subscribe(`/topic/room/${roomCode}`, (message) => {
       const data = JSON.parse(message.body);
       console.log("[WebSocket] 수신됨:", data);
 
-      // 퀴즈 시작
       if (data.type === "startQuiz") {
         currentQuestionIndex = data.currentQuestionIndex || 0;
         showQuizScreen();
@@ -384,7 +379,6 @@ function connectWebSocket() {
         startTimer(remainTime, data.endTime);
       }
 
-      // 문제 넘기기
       if (data.type === "questionIndex") {
         currentQuestionIndex = data.currentQuestionIndex;
         renderQuestion();
@@ -394,22 +388,18 @@ function connectWebSocket() {
         startTimer(remainTime, data.endTime);
       }
 
-      // 결과 보기
       if (data.type === "showResult") {
         updateResultModal(data);
       }
 
-      // 결과 닫기
       if (data.type === "closeResult") {
         document.getElementById("resultModal").style.display = "none";
       }
 
-      // 채팅 수신 처리 (📌 데스크탑 + 모바일 모두 반영)
       if (data.type === "chat") {
         const nickname = data.nickname;
         const message = data.message;
 
-        // 데스크탑 채팅창
         const chatBox = document.getElementById("chatMessages");
         const msgDiv = document.createElement("div");
         msgDiv.classList.add("chat-message");
@@ -417,7 +407,6 @@ function connectWebSocket() {
         chatBox.appendChild(msgDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        // 모바일 채팅창
         const mobileBox = document.getElementById("mobileChatMessages");
         if (mobileBox) {
           const mobileMsg = document.createElement("div");
@@ -443,7 +432,7 @@ function sendQuestionIndex(index) {
 
 //정답확인
 async function submitAnswer(isAuto = false) {
-  const userEmail = localStorage.getItem("loggedInUser");
+  const userEmail = await getDecryptedEmail();
   const question = questions[currentQuestionIndex];
 
   if (submitAnswer.submitted?.[currentQuestionIndex]) {
@@ -465,9 +454,7 @@ async function submitAnswer(isAuto = false) {
     const selectedEls = document.querySelectorAll(".choice-item.selected");
     if (selectedEls.length === 0 && !isAuto) {
       alert("정답을 선택해주세요.");
-      submitBtn.disabled = false;
-      submitBtn.style.backgroundColor = "";
-      submitBtn.style.cursor = "pointer";
+      resetSubmitButtonStyle(submitBtn);
       return;
     }
     payload.selectedIndexes = [...selectedEls].map(el => parseInt(el.dataset.index));
@@ -476,9 +463,7 @@ async function submitAnswer(isAuto = false) {
     const selected = document.querySelector(".ox-choice-item.ox-choice-selected");
     if (!selected && !isAuto) {
       alert("정답을 선택해주세요.");
-      submitBtn.disabled = false;
-      submitBtn.style.backgroundColor = "";
-      submitBtn.style.cursor = "pointer";
+      resetSubmitButtonStyle(submitBtn);
       return;
     }
     payload.selectedAnswer = selected?.dataset?.value || "";
@@ -488,18 +473,14 @@ async function submitAnswer(isAuto = false) {
     const answerText = input?.value.trim();
     if (!answerText && !isAuto) {
       alert("정답을 입력해주세요.");
-      submitBtn.disabled = false;
-      submitBtn.style.backgroundColor = "";
-      submitBtn.style.cursor = "pointer";
+      resetSubmitButtonStyle(submitBtn);
       return;
     }
     payload.shortAnswer = answerText || "";
 
   } else {
     alert("지원되지 않는 문제 유형입니다.");
-    submitBtn.disabled = false;
-    submitBtn.style.backgroundColor = "";
-    submitBtn.style.cursor = "pointer";
+    resetSubmitButtonStyle(submitBtn);
     return;
   }
 
@@ -536,6 +517,11 @@ async function submitAnswer(isAuto = false) {
   }
 }
 
+function resetSubmitButtonStyle(btn) {
+  btn.disabled = false;
+  btn.style.backgroundColor = "";
+  btn.style.cursor = "pointer";
+}
 
 //타이머
 function startTimer(limitSeconds, endTime) {
@@ -832,14 +818,18 @@ function initializeMobileSlides() {
 //결과보기 함수
 async function showResult() {
   try {
-    const res = await fetch(`${API_URL}/rooms/result/${roomCode}/${currentQuestionIndex}?userId=${localStorage.getItem("loggedInUser")}`);
+    const userEmail = await getDecryptedEmail();  // 이메일 복호화
+
+    const res = await fetch(`${API_URL}/rooms/result/${roomCode}/${currentQuestionIndex}?userId=${userEmail}`);
     const data = await res.json();
 
     if (!data.success) {
       alert("결과 불러오기 실패");
       return;
     }
+
     updateResultModal(data);
+
     if (isHost && stompClient?.connected) {
       stompClient.send(`/app/room/${roomCode}/showResult`, {}, JSON.stringify({
         type: "showResult",
@@ -850,15 +840,16 @@ async function showResult() {
     } else if (!isHost) {
       console.log("[showResult] 참가자 화면이므로 결과 송신하지 않음");
     }
+
     if (isHost) {
       document.getElementById("nextQuestionBtn").style.display = "inline-block";
     }
+
   } catch (error) {
     console.error("결과 불러오기 중 오류:", error);
     alert("서버 오류로 결과를 불러오지 못했습니다.");
   }
 }
-
 
 function renderCorrectRateChart(correctCount, wrongCount) {
   const canvas = document.getElementById("correctRateChart");

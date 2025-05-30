@@ -20,7 +20,8 @@ async function initAuth() {
   const mobileAuthButton = document.getElementById("mobileAuthButton");
   const userGreeting = document.getElementById("userGreeting");
   const loginTextButton = document.getElementById("loginTextButton");
-  const loggedInUser = localStorage.getItem("loggedInUser");
+
+  const loggedInUser = await getDecryptedEmail();
 
   if (loggedInUser) {
     try {
@@ -55,10 +56,10 @@ async function initAuth() {
   }
 }
 
-function handleAuth() {
-  const loggedInUser = localStorage.getItem("loggedInUser");
+async function handleAuth() {
+  const loggedInUser = await getDecryptedEmail();
   if (loggedInUser) {
-    localStorage.removeItem("loggedInUser");
+    sessionStorage.removeItem("userEmail");
     alert("로그아웃되었습니다.");
     location.reload();
   } else {
@@ -66,15 +67,16 @@ function handleAuth() {
   }
 }
 
-function joinRoom() {
+async function joinRoom() {
   const roomCode = document.getElementById("room-code").value.trim();
   const roomPassword = document.getElementById("room-password").value.trim();
-  const loggedInUser = localStorage.getItem("loggedInUser");
+  const loggedInUser = await getDecryptedEmail();
 
   if (!roomCode || !roomPassword) {
     alert("방 코드와 비밀번호를 모두 입력하세요!");
     return;
   }
+
   if (!loggedInUser) {
     alert("로그인 후 참여 가능합니다.");
     window.location.href = "login.html";
@@ -95,15 +97,22 @@ function joinRoom() {
       if (data.success) {
         alert("방에 참여하였습니다!");
 
-        localStorage.setItem("roomPassword", roomPassword);
-        localStorage.setItem("loggedInUser", loggedInUser);
-    
+        sessionStorage.setItem("roomPassword", roomPassword);
         window.location.href = `quiz.html?code=${roomCode}`;
       } else {
         alert("방 참여 실패: " + data.message);
       }
-    })    
+    })
     .catch(err => console.error("방 참여 오류:", err));
+}
+
+function joinRoomWithCode(code) {
+  const password = prompt("비밀번호를 입력하세요:");
+  if (password) {
+    document.getElementById("room-code").value = code;
+    document.getElementById("room-password").value = password;
+    joinRoom();
+  }
 }
 
 function loadRooms() {
