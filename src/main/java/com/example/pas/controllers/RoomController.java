@@ -123,7 +123,7 @@ public class RoomController {
         String userId = request.get("userId");
         String nickname = request.get("nickname");
 
-        if (code == null || password == null || userId == null) {
+        if (code == null || userId == null) {
             return Map.of("success", false, "message", "잘못된 요청입니다.");
         }
 
@@ -136,20 +136,17 @@ public class RoomController {
 
         Room room = roomOptional.get();
 
-        if (!room.getPassword().equals(password)) {
-            return Map.of("success", false, "message", "비밀번호가 틀렸습니다.");
-        }
-
-        Map<String, String> participants = room.getParticipants();
-        if (participants == null)
-            participants = new HashMap<>();
-
-        String existingNickname = participants.get(emailKey);
-        if (existingNickname != null && !existingNickname.trim().isEmpty()) {
-            return Map.of("success", true, "message", "기존 닉네임", "nickname", existingNickname);
-        }
-
+        // 닉네임 설정 시에는 비밀번호 검증을 건너뜁니다
         if (nickname != null && !nickname.trim().isEmpty()) {
+            Map<String, String> participants = room.getParticipants();
+            if (participants == null)
+                participants = new HashMap<>();
+
+            String existingNickname = participants.get(emailKey);
+            if (existingNickname != null && !existingNickname.trim().isEmpty()) {
+                return Map.of("success", true, "message", "기존 닉네임", "nickname", existingNickname);
+            }
+
             if (participants.containsValue(nickname)) {
                 return Map.of("success", false, "message", "이미 사용 중인 닉네임입니다.");
             }
@@ -158,6 +155,15 @@ public class RoomController {
             roomRepository.save(room);
             return Map.of("success", true, "message", "닉네임 등록", "nickname", nickname);
         }
+
+        // 방 참여 시에는 비밀번호 검증을 수행합니다
+        if (password == null || !room.getPassword().equals(password)) {
+            return Map.of("success", false, "message", "비밀번호가 틀렸습니다.");
+        }
+
+        Map<String, String> participants = room.getParticipants();
+        if (participants == null)
+            participants = new HashMap<>();
 
         if (!participants.containsKey(emailKey)) {
             participants.put(emailKey, "");

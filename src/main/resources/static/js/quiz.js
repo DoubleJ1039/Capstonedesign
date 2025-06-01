@@ -77,8 +77,6 @@ async function fetchRoomStatus() {
 function setupLobbyEvents() {
   document.getElementById("confirmNicknameBtn").addEventListener("click", async () => {
     const nickname = document.getElementById("nicknameInput").value.trim();
-    const password = localStorage.getItem("roomPassword") || "";
-
     const userEmail = await getDecryptedEmail();
 
     if (!nickname || !userEmail) {
@@ -91,7 +89,6 @@ function setupLobbyEvents() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         code: roomCode,
-        password,
         userId: userEmail,
         nickname: nickname
       })
@@ -101,6 +98,7 @@ function setupLobbyEvents() {
     if (data.success) {
       document.getElementById("nicknameInput").disabled = true;
       document.getElementById("confirmNicknameBtn").disabled = true;
+      localStorage.setItem("nickname", nickname);
     } else {
       alert(data.message || "닉네임 설정 실패");
     }
@@ -908,18 +906,21 @@ function showQuizScreen() {
   const startBtn = document.getElementById("quizStartControlBtn");
   const resultBtn = document.getElementById("showResultBtn");
   const topControls = document.getElementById("topControls");
+  const exitBtn = document.getElementById("exitQuizBtn");
+
+  // 퀴즈 나가기 버튼은 모든 사용자에게 표시
+  exitBtn.style.display = "inline-block";
+  topControls.style.display = "flex";
 
   if (isHost) {
     nextBtn.style.display = "none";
     startBtn.style.display = "inline-block";
     resultBtn.style.display = "inline-block";
-    topControls.style.display = "flex";
     setHostEventListeners();
   } else {
     nextBtn.style.display = "none";
     startBtn.style.display = "none";
     resultBtn.style.display = "none";
-    topControls.style.display = "none";
   }
 }
 
@@ -1052,10 +1053,31 @@ document.getElementById("exitQuizBtn").addEventListener("click", () => {
 // 이전 문제 버튼 클릭 이벤트 핸들러
 function showPreviousQuestion() {
   if (currentQuestionIndex > 0) {
-    currentQuestionIndex--;
-    renderQuestion();
-    updateNavigationButtons();
-    sendQuestionIndex(currentQuestionIndex);
+    const newIndex = currentQuestionIndex - 1;
+    
+    // 방장인 경우에만 서버에 인덱스 변경 요청
+    if (isHost) {
+      fetch(`${API_URL}/ws/questionIndex/${roomCode}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentQuestionIndex: newIndex })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            currentQuestionIndex = newIndex;
+            renderQuestion();
+            updateNavigationButtons();
+            sendQuestionIndex(newIndex);
+          } else {
+            alert("문제를 넘길 수 없습니다.");
+          }
+        })
+        .catch(error => {
+          console.error("문제 인덱스 변경 오류:", error);
+          alert("서버 오류로 문제를 넘길 수 없습니다.");
+        });
+    }
   }
 }
 
