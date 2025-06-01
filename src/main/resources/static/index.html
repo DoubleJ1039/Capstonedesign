@@ -12,62 +12,83 @@
 </head>
 <body>
 
-  <!-- 네비게이션 바 -->
-  <div class="navbar">
-    <div class="nav-header">
-      <div class="nav-logo">
-        <a href="index.html">SPAS</a>
-      </div>
-      <div class="nav-controls">
-        <button id="loginTextButton" onclick="handleAuth()" class="mobile-only">login</button>
-        <button class="nav-toggle" onclick="toggleMobileMenu()">☰</button>
-      </div>
+<!-- 네비게이션 바 -->
+<div class="navbar">
+  <div class="nav-header">
+    <div class="nav-logo">
+      <a href="index.html">SPAS</a>
     </div>
-
-    <div class="nav-center" id="mobileMenu">
-      <ul class="nav-menu">
-        <li><a href="roomop.html">방 설정</a></li>
-        <li><a href="mypage.html">마이페이지</a></li>
-        <li><a href="#">추가</a></li>
-        <li><a href="#">추가</a></li>
-        <li class="mobile-auth">
-          <button id="mobileAuthButton" onclick="handleAuth()">로그아웃</button>
-        </li>
-      </ul>
-    </div>
-
-    <!-- 로그인/로그아웃 -->
-    <div class="nav-actions">
-      <span id="userGreeting">안녕하세요, 사용자가름</span>
-      <button id="authButton" onclick="handleAuth()">로그아웃</button>
+    <div class="nav-controls">
+      <button id="loginTextButton" onclick="handleAuth()" class="mobile-only">login</button>
+      <button class="nav-toggle" onclick="toggleMobileMenu()">☰</button>
     </div>
   </div>
 
-  <!-- 캐러셀 -->
-  <div class="carousel-container">
-    <div class="carousel-track" id="carousel-track">
-      <!-- 슬라이드는 JS로 동적 삽입 -->
-    </div>
-    <button class="carousel-button prev">&lt;</button>
-    <button class="carousel-button next">&gt;</button>
+  <div class="nav-center" id="mobileMenu">
+    <ul class="nav-menu">
+      <!-- 방 설정 링크 제거됨 (수정)-->
+      <li><a href="mypage.html">마이페이지</a></li>
+      <li><a href="#">추가</a></li>
+      <li><a href="#">추가</a></li>
+      <li class="mobile-auth">
+        <button id="mobileAuthButton" onclick="handleAuth()">로그아웃</button>
+      </li>
+    </ul>
   </div>
 
-  <!-- 메인 -->
-  <main>
-    <div class="main-sections">
-      <section id="room-section">
-        <h2>방 참여</h2>
-        <input type="text" id="room-code" placeholder="방 코드 입력" />
-        <input type="password" id="room-password" placeholder="비밀번호 입력" />
-        <button id="joinButton" onclick="joinRoom()">참여하기</button>
-      </section>
+  <div class="nav-actions">
+    <span id="userGreeting">안녕하세요, 사용자가름</span>
+    <button id="authButton" onclick="handleAuth()">로그아웃</button>
+  </div>
+</div>
 
-      <section id="room-list">
-        <h2>최근 생성된 방</h2>
-        <ul id="rooms"></ul>
-      </section>
-    </div>
-  </main>
+<!-- 메인 Hero 섹션 (수정/추가) -->
+<main>
+  <div class="hero-wrapper">
+    <section class="hero-section">
+      
+      <!-- 회색 박스 -->
+      <div class="hero-left-wrapper">
+        <div class="hero-left">
+          <h1>쉽고 빠르게<br>퀴즈에 참여하세요.</h1>
+          <p> 함께 학습방을 만들어보세요!</p>
+          <div class="hero-button-group">
+            <!-- 버튼 변경 -->
+            <a href="roomop.html" class="hero-btn">방 만들기</a>
+            <button class="hero-btn outline" id="join-toggle-btn">참여하기</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 캐러셀 -->
+      <div class="hero-right">
+        <div class="carousel-container">
+          <div class="carousel-track" id="carousel-track">
+            <!-- JS로 이미지가 삽입됨 -->
+          </div>
+          <button class="carousel-button prev">&lt;</button>
+          <button class="carousel-button next">&gt;</button>
+        </div>
+      </div>
+
+    </section>
+  </div>
+
+  <div class="main-sections">
+    <section id="room-section">
+      <h2>방 참여</h2>
+      <input type="text" id="room-code" placeholder="방 코드 입력" />
+      <input type="password" id="room-password" placeholder="비밀번호 입력" />
+      <button id="joinButton" onclick="joinRoom()">참여하기</button>
+    </section>
+
+    <section id="room-list">
+      <h2>최근 생성된 방</h2>
+      <ul id="rooms"></ul>
+    </section>
+  </div>
+</main>
+
 
   <!-- 소개 섹션 -->
   <section class="intro">

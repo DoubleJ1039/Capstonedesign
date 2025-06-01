@@ -8,13 +8,16 @@ const slidesData = [
   "images/banner5.png"
 ];
 
-let currentIndex = 2;
-
-document.addEventListener("DOMContentLoaded", () => {
-  initAuth();
-  loadRooms();
+document.addEventListener("DOMContentLoaded", async () => {
+  await initAuth(); // 인증 먼저
+  loadRooms();      // 방 목록 불러오기
+  initCarousel();   // 캐러셀 시작
+  initSwiper();     // Swiper 초기화
 });
 
+/* ===========================
+   인증 관련
+=========================== */
 async function initAuth() {
   const authButton = document.getElementById("authButton");
   const mobileAuthButton = document.getElementById("mobileAuthButton");
@@ -27,7 +30,6 @@ async function initAuth() {
     try {
       const res = await fetch(`${API_URL}/auth/user/info?email=${encodeURIComponent(loggedInUser)}`);
       const data = await res.json();
-
       if (data.success) {
         userGreeting.textContent = `안녕하세요 ${data.displayName} 님`;
       } else {
@@ -48,11 +50,7 @@ async function initAuth() {
     authButton.className = "login-btn";
     userGreeting.textContent = "";
 
-    if (window.innerWidth <= 768) {
-      loginTextButton.style.display = "inline-block";
-    } else {
-      loginTextButton.style.display = "none";
-    }
+    loginTextButton.style.display = window.innerWidth <= 768 ? "inline-block" : "none";
   }
 }
 
@@ -67,6 +65,9 @@ async function handleAuth() {
   }
 }
 
+/* ===========================
+   방 관련
+=========================== */
 async function joinRoom() {
   const roomCode = document.getElementById("room-code").value.trim();
   const roomPassword = document.getElementById("room-password").value.trim();
@@ -83,27 +84,27 @@ async function joinRoom() {
     return;
   }
 
-  fetch(`${API_URL}/rooms/join`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      code: roomCode,
-      password: roomPassword,
-      userId: loggedInUser
-    })
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        alert("방에 참여하였습니다!");
-
-        sessionStorage.setItem("roomPassword", roomPassword);
-        window.location.href = `quiz.html?code=${roomCode}`;
-      } else {
-        alert("방 참여 실패: " + data.message);
-      }
-    })
-    .catch(err => console.error("방 참여 오류:", err));
+  try {
+    const res = await fetch(`${API_URL}/rooms/join`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        code: roomCode,
+        password: roomPassword,
+        userId: loggedInUser
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert("방에 참여하였습니다!");
+      sessionStorage.setItem("roomPassword", roomPassword);
+      window.location.href = `quiz.html?code=${roomCode}`;
+    } else {
+      alert("방 참여 실패: " + data.message);
+    }
+  } catch (err) {
+    console.error("방 참여 오류:", err);
+  }
 }
 
 function joinRoomWithCode(code) {
@@ -122,7 +123,7 @@ function loadRooms() {
       const roomsList = document.getElementById("rooms");
       roomsList.innerHTML = "";
 
-      if (data.length === 0) {
+      if (!data || data.length === 0) {
         roomsList.innerHTML = "<li>방이 존재하지 않습니다.</li>";
         return;
       }
@@ -138,59 +139,39 @@ function loadRooms() {
     .catch(err => console.error("방 목록 불러오기 오류:", err));
 }
 
-/* 소개 1 */
-const swiper = new Swiper('.swiper', {
-  loop: true, 
-  autoplay: {
-    delay: 2500,
-    disableOnInteraction: false,
-  },
-  slidesPerView: 3,
-  spaceBetween: 20,
-  breakpoints: {
-    320: {
-      slidesPerView: 1,
-      spaceBetween: 10,
-    },
-    480: {
-      slidesPerView: 2,
-      spaceBetween: 15,
-    },
-    769: {
-      slidesPerView: 3,
-      spaceBetween: 20,
-    }
-  }
-});
-/* ================================
-   캐러셀 관련
-================================ */
-document.addEventListener("DOMContentLoaded", () => {
+/* ===========================
+   캐러셀
+=========================== */
+function initCarousel() {
   const track = document.getElementById("carousel-track");
   const prevBtn = document.querySelector(".carousel-button.prev");
   const nextBtn = document.querySelector(".carousel-button.next");
 
-  const imageSources = [
-  "images/banner1.png",
-  "images/banner2.png",
-  "images/banner3.png",
-  "images/banner4.png",
-  "images/banner5.png"
-];
+  if (!track || !prevBtn || !nextBtn) {
+    console.warn("캐러셀 요소가 존재하지 않습니다.");
+    return;
+  }
 
-  let currentIndex = 0;
-
-  imageSources.forEach(src => {
+  // 이미지 삽입
+  slidesData.forEach(src => {
     const slide = document.createElement("div");
     slide.className = "carousel-slide";
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "image-wrapper";
+
     const img = document.createElement("img");
     img.src = src;
     img.alt = "슬라이드 이미지";
-    slide.appendChild(img);
+    img.className = "centered-image";
+
+    wrapper.appendChild(img);
+    slide.appendChild(wrapper);
     track.appendChild(slide);
   });
 
   const slides = document.querySelectorAll(".carousel-slide");
+  let currentIndex = 0;
 
   const updateSlidePosition = () => {
     const offset = -currentIndex * 100;
@@ -211,27 +192,107 @@ document.addEventListener("DOMContentLoaded", () => {
     currentIndex = (currentIndex + 1) % slides.length;
     updateSlidePosition();
   }, 5000);
-});
-
-function toggleMobileMenu() {
-  const menu = document.getElementById('mobileMenu');
-  menu.classList.toggle('active');
 }
 
-//swiper
-document.addEventListener('DOMContentLoaded', () => {
-      const swiper = new Swiper('.swiper', {
-        loop: true,
-        autoplay: {
-          delay: 3000,
-          disableOnInteraction: false,
-        },
-        slidesPerView: 'auto',
+/* ===========================
+   Swiper 소개 슬라이드
+=========================== */
+function initSwiper() {
+  new Swiper('.swiper', {
+    loop: true,
+    autoplay: {
+      delay: 2500,
+      disableOnInteraction: false,
+    },
+    slidesPerView: 3,
+    spaceBetween: 20,
+    breakpoints: {
+      320: {
+        slidesPerView: 1,
+        spaceBetween: 10,
+      },
+      480: {
+        slidesPerView: 2,
+        spaceBetween: 15,
+      },
+      769: {
+        slidesPerView: 3,
         spaceBetween: 20,
-        breakpoints: {
-          769: {
-            slidesPerView: 3,
-          },
-        },
-      });
-    });
+      }
+    }
+  });
+}
+
+/* ===========================
+   모바일 메뉴
+=========================== */
+function toggleMobileMenu() {
+  const menu = document.getElementById("mobileMenu");
+  menu.classList.toggle("active");
+}
+
+/* ================================
+   캐러셀 관련
+================================ */
+function initCarousel() {
+  const track = document.getElementById("carousel-track");
+  const prevBtn = document.querySelector(".carousel-button.prev");
+  const nextBtn = document.querySelector(".carousel-button.next");
+
+  if (!track) return; // ✅ 만약 트랙이 존재하지 않으면 아무것도 하지 않음
+
+  const imageSources = [
+    "images/banner1.png",
+    "images/banner2.png",
+    "images/banner3.png",
+    "images/banner4.png",
+    "images/banner5.png"
+  ];
+
+  let currentIndex = 0;
+
+  imageSources.forEach(src => {
+    const slide = document.createElement("div");
+    slide.className = "carousel-slide";
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "image-wrapper";
+
+    const img = document.createElement("img");
+    img.src = src;
+    img.alt = "슬라이드 이미지";
+    img.className = "centered-image";
+
+    wrapper.appendChild(img);
+    slide.appendChild(wrapper);
+    track.appendChild(slide);
+  });
+
+  const slides = document.querySelectorAll(".carousel-slide");
+
+  const updateSlidePosition = () => {
+    const offset = -currentIndex * 100;
+    track.style.transform = `translateX(${offset}%)`;
+  };
+
+  prevBtn?.addEventListener("click", () => {
+    currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+    updateSlidePosition();
+  });
+
+  nextBtn?.addEventListener("click", () => {
+    currentIndex = (currentIndex + 1) % slides.length;
+    updateSlidePosition();
+  });
+
+  setInterval(() => {
+    currentIndex = (currentIndex + 1) % slides.length;
+    updateSlidePosition();
+  }, 5000);
+}
+
+
+function toggleMobileMenu() {
+  const menu = document.getElementById("mobileMenu");
+  menu.classList.toggle("active");
+}
