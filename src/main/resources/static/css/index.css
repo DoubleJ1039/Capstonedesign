@@ -103,24 +103,40 @@ body {
   }
 
   .nav-center {
-    display: none;
-    flex-direction: column;
-    width: 100%;
     position: absolute;
     top: 60px;
     left: 0;
-    background: #fffaf2;
+    right: 0;
+    width: 100vw; /* 전체 화면 너비 */
     padding: 20px;
     z-index: 999;
+    background: #fffaf2;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-sizing: border-box; /* padding 포함 계산 */
+    display: none; /* 기본은 숨김 */
   }
 
   .nav-center.active {
-    display: flex;
+    display: flex; /* 클릭 시 보이게 */
+    flex-direction: column;
+    align-items: stretch; /* 내부 메뉴가 전체 너비를 차지 */
   }
 
   .nav-menu {
     flex-direction: column;
     gap: 15px;
+    padding-left: 0;
+    margin: 0;
+  }
+
+  .nav-menu li {
+    width: 100%;
+  }
+
+  .nav-menu li a {
+    display: block;
+    width: 100%;
+    padding: 10px 15px;
   }
 
   .nav-actions {
@@ -132,10 +148,25 @@ body {
   }
 
   .mobile-only {
-  display: none;
+    display: none;
+  }
+
+  .mobile-auth button {
+    width: 100%;
+    padding: 12px;
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    cursor: pointer;
+  }
+
+  .mobile-auth button:hover {
+    background-color: #cc0000;
+  }
 }
 
-}
 
 
 /* 토글버튼 데스크톱 숨기기 */
@@ -227,6 +258,13 @@ button:hover {
   flex-direction: column;
   gap: 8px;
   padding-left: 0;
+  text-align: left;
+  margin-top: 20px;
+
+  max-height: 160px;       /* 스크롤이 생길 기준 높이 */
+  overflow-y: auto;        /* 세로 스크롤만 표시 */
+  scrollbar-width: thin;   /* Firefox용 얇은 스크롤 */
+  scrollbar-color: #ccc transparent; /* Firefox용 색상 */
 }
 
 #rooms li {
@@ -236,7 +274,20 @@ button:hover {
   border-radius: 6px;
   display: flex;
   align-items: center;
+  margin-bottom: 8px;
 }
+
+#rooms::-webkit-scrollbar {
+  width: 6px;
+}
+#rooms::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 4px;
+}
+#rooms::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
 
 #rooms li::before {
   content: "- ";
@@ -337,7 +388,7 @@ button:hover {
   width: 540px;
   height: 540px;
   background-color: #f3f1ea;
-  border-radius: 24px;
+  border-radius: 14px;
   padding: 40px;
   display: flex;
   flex-direction: column;
@@ -466,23 +517,41 @@ button:hover {
   .hero-left-wrapper,
   .hero-right {
     width: 90vw;
-    height: 90vw;
     max-width: 540px;
+
+    /* 고정 높이 제거 → 내부 콘텐츠에 따라 늘어남 */
+    height: auto;
+    padding: 24px 16px;
+    box-sizing: border-box;
   }
 
   .hero-left {
     text-align: center;
   }
 
-   .hero-button-group {
+  .hero-left h1 {
+    font-size: 24px;
+    line-height: 1.4;
+    margin-bottom: 12px;
+  }
+
+  .hero-left p {
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+
+  .hero-button-group {
     justify-content: center;
+    flex-direction: column;  /* 버튼을 세로로 정렬 */
+    gap: 12px;
+    width: 100%;
+    margin-top: 16px;
   }
 
   .hero-button-group .hero-btn {
-    width: auto;
-    margin-bottom: 8px;
-    flex: 1 1 auto;
-    text-align: center;
+    width: 100%;
+    padding: 14px;
+    font-size: 15px;
   }
 }
 
@@ -591,13 +660,15 @@ button:hover {
     margin-left: 40px;
   }
 
+  .hero-right {
+    display: none !important;
+  }
 }
-
 
 
 .site-footer {
   background-color: #ffffff;
-  color: #333;
+  color: #444;
   padding: 20px 10px;
   font-size: 14px;
   border-top: 1px solid #ccc;
@@ -1018,4 +1089,81 @@ button:hover {
     margin-top: 20px;
     font-size: 11px;
   }
+}
+
+/* 모달 전체 배경 */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 2000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  justify-content: center;
+  align-items: center;
+}
+
+/* 모달 활성화 상태 */
+.modal.show {
+  display: flex;
+}
+
+/* 모달 숨기기 */
+.hidden {
+  display: none !important;
+}
+
+/* 모달 내용 박스 */
+.modal-content {
+  background-color: #fffaf2;
+  padding: 40px 50px;
+  border-radius: 20px;
+  max-width: 500px;
+  width: 95%;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+  text-align: center;
+  position: relative;
+}
+
+/* 닫기 버튼 */
+.close {
+  color: #aaa;
+  position: absolute;
+  top: 20px;
+  right: 25px;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.close:hover {
+  color: black;
+}
+
+/* 입력 필드 */
+.modal-content input[type="text"],
+.modal-content input[type="password"] {
+  width: 100%;
+  padding: 14px;
+  margin: 12px 0;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+/* 참여 버튼 */
+.modal-content button {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  background-color: #1C1C3A;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+.modal-content button:hover {
+  background-color: #3b3b55;
 }

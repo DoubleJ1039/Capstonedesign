@@ -1,10 +1,9 @@
-// AES.js - 전역 등록 버전
 let sessionKey = null;
 
 async function generateSessionKey() {
   sessionKey = await crypto.subtle.generateKey(
     { name: 'AES-GCM', length: 256 },
-    true, // export 가능하게 설정
+    true,
     ['encrypt', 'decrypt']
   );
 

@@ -9,10 +9,11 @@ const slidesData = [
 ];
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await initAuth(); // 인증 먼저
-  loadRooms();      // 방 목록 불러오기
-  initCarousel();   // 캐러셀 시작
-  initSwiper();     // Swiper 초기화
+  await initAuth();
+  loadRooms();
+  initCarousel();
+  initSwiper();
+  initJoinModal(); 
 });
 
 /* ===========================
@@ -49,7 +50,6 @@ async function initAuth() {
     mobileAuthButton.textContent = "로그인";
     authButton.className = "login-btn";
     userGreeting.textContent = "";
-
     loginTextButton.style.display = window.innerWidth <= 768 ? "inline-block" : "none";
   }
 }
@@ -128,7 +128,7 @@ function loadRooms() {
         return;
       }
 
-      data.slice(0, 4).forEach(room => {
+      data.reverse().slice(0, 5).forEach(room => {
         const li = document.createElement("li");
         li.textContent = `방 이름: ${room.name} / 코드: ${room.code}`;
         li.style.cursor = "pointer";
@@ -147,12 +147,8 @@ function initCarousel() {
   const prevBtn = document.querySelector(".carousel-button.prev");
   const nextBtn = document.querySelector(".carousel-button.next");
 
-  if (!track || !prevBtn || !nextBtn) {
-    console.warn("캐러셀 요소가 존재하지 않습니다.");
-    return;
-  }
+  if (!track) return;
 
-  // 이미지 삽입
   slidesData.forEach(src => {
     const slide = document.createElement("div");
     slide.className = "carousel-slide";
@@ -178,12 +174,12 @@ function initCarousel() {
     track.style.transform = `translateX(${offset}%)`;
   };
 
-  prevBtn.addEventListener("click", () => {
+  prevBtn?.addEventListener("click", () => {
     currentIndex = (currentIndex - 1 + slides.length) % slides.length;
     updateSlidePosition();
   });
 
-  nextBtn.addEventListener("click", () => {
+  nextBtn?.addEventListener("click", () => {
     currentIndex = (currentIndex + 1) % slides.length;
     updateSlidePosition();
   });
@@ -231,68 +227,33 @@ function toggleMobileMenu() {
   menu.classList.toggle("active");
 }
 
-/* ================================
-   캐러셀 관련
-================================ */
-function initCarousel() {
-  const track = document.getElementById("carousel-track");
-  const prevBtn = document.querySelector(".carousel-button.prev");
-  const nextBtn = document.querySelector(".carousel-button.next");
+/* ===========================
+   모달 제어
+=========================== */
+function initJoinModal() {
+  const joinModal = document.getElementById("joinModal");
+  const joinBtn = document.getElementById("join-toggle-btn");
+  const closeModal = document.getElementById("closeModal");
 
-  if (!track) return; // ✅ 만약 트랙이 존재하지 않으면 아무것도 하지 않음
+  if (!joinModal || !joinBtn || !closeModal) {
+    console.warn("모달 관련 요소가 없습니다.");
+    return;
+  }
 
-  const imageSources = [
-    "images/banner1.png",
-    "images/banner2.png",
-    "images/banner3.png",
-    "images/banner4.png",
-    "images/banner5.png"
-  ];
-
-  let currentIndex = 0;
-
-  imageSources.forEach(src => {
-    const slide = document.createElement("div");
-    slide.className = "carousel-slide";
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "image-wrapper";
-
-    const img = document.createElement("img");
-    img.src = src;
-    img.alt = "슬라이드 이미지";
-    img.className = "centered-image";
-
-    wrapper.appendChild(img);
-    slide.appendChild(wrapper);
-    track.appendChild(slide);
+  joinBtn.addEventListener("click", () => {
+    joinModal.classList.add("show");
+    joinModal.classList.remove("hidden");
   });
 
-  const slides = document.querySelectorAll(".carousel-slide");
-
-  const updateSlidePosition = () => {
-    const offset = -currentIndex * 100;
-    track.style.transform = `translateX(${offset}%)`;
-  };
-
-  prevBtn?.addEventListener("click", () => {
-    currentIndex = (currentIndex - 1 + slides.length) % slides.length;
-    updateSlidePosition();
+  closeModal.addEventListener("click", () => {
+    joinModal.classList.remove("show");
+    joinModal.classList.add("hidden");
   });
 
-  nextBtn?.addEventListener("click", () => {
-    currentIndex = (currentIndex + 1) % slides.length;
-    updateSlidePosition();
+  window.addEventListener("click", (e) => {
+    if (e.target === joinModal) {
+      joinModal.classList.remove("show");
+      joinModal.classList.add("hidden");
+    }
   });
-
-  setInterval(() => {
-    currentIndex = (currentIndex + 1) % slides.length;
-    updateSlidePosition();
-  }, 5000);
-}
-
-
-function toggleMobileMenu() {
-  const menu = document.getElementById("mobileMenu");
-  menu.classList.toggle("active");
 }
