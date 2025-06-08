@@ -1013,4 +1013,27 @@ canvas {
   border-radius: 10px;
   resize: none;
 }
+
+  /* 점수 랭킹 텍스트 숨기기 */
+  .result-section:nth-child(1) ul,
+  .result-section:nth-child(1) li,
+  .result-section:nth-child(1) p,
+  .result-section:nth-child(1) span,
+  .result-section:nth-child(1) div:not(canvas) {
+    display: none !important;
+  }
+
+  /* 빠르게 푼 사람 텍스트 숨기기 */
+  .result-section:nth-child(3) ul,
+  .result-section:nth-child(3) li,
+  .result-section:nth-child(3) p,
+  .result-section:nth-child(3) span,
+  .result-section:nth-child(3) div:not(canvas) {
+    display: none !important;
+  }
+
+  .result-section:nth-child(1) canvas,
+  .result-section:nth-child(3) canvas {
+    display: block !important;
+  }
 }

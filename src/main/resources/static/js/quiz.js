@@ -677,7 +677,7 @@ function updateResultModal(data) {
     display: false,
     grid: { display: false },
     suggestedMin: 0,
-    suggestedMax: Math.max(...podiumRanking.map(p => p.score || 0), 10) + 5
+    suggestedMax: 100
   }
         },
         elements: {
@@ -736,7 +736,7 @@ function updateResultModal(data) {
     display: false,
     grid: { display: false },
     suggestedMin: 0,
-    suggestedMax: Math.max(...podiumRanking.map(p => p.score || 0), 10) + 5
+    suggestedMax: 100
   }
         },
         elements: {
@@ -760,7 +760,6 @@ function updateResultModal(data) {
     initializeMobileSlides();
   }
 }
-
 
 // 모바일 슬라이드 초기화 함수
 function initializeMobileSlides() {

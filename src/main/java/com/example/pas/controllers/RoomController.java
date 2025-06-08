@@ -223,6 +223,19 @@ public class RoomController {
             room.setEndTime(endTime);
         }
 
+        Map<String, String> participants = room.getParticipants();
+        if (participants != null) {
+            Map<String, Integer> scores = room.getScores();
+            if (scores == null)
+                scores = new HashMap<>();
+
+            for (String userId : participants.keySet()) {
+                scores.put(userId, 1);
+            }
+
+            room.setScores(scores);
+        }
+
         roomRepository.save(room);
 
         return Map.of("success", true, "message", "퀴즈 시작", "endTime", room.getEndTime());
