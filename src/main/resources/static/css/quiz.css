@@ -1273,21 +1273,6 @@ canvas {
   }
 
   /* o/x */
-    #result-ox .ox-column:nth-child(1) .ox-image {
-    background-image: url('/images/o.png') !important;
-    background-size: contain !important;
-    background-repeat: no-repeat !important;
-    background-position: center !important;
-    z-index: 5 !important;
-  }
-  #result-ox .ox-column:nth-child(3) .ox-image {
-    background-image: url('/images/x.png') !important;
-    background-size: contain !important;
-    background-repeat: no-repeat !important;
-    background-position: center !important;
-    z-index: 5 !important;
-  }
-
   /* ─── 슬라이드 스타일 그대로 유지 ─── */
   #result-ox .ox-column {
     position: absolute;

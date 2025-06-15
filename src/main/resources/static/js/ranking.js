@@ -1,44 +1,59 @@
-document.addEventListener("DOMContentLoaded", async () => {
-  const params = new URLSearchParams(window.location.search);
-  const roomCode = params.get("code");
-  document.getElementById("roomCode").textContent = roomCode || "없음";
+const API_URL = "/api";
+let roomCode = null;
 
-  if (!roomCode) {
-    alert("방 코드가 없습니다.");
-    return;
-  }
+document.addEventListener("DOMContentLoaded", async () => {
+  roomCode = localStorage.getItem("roomCode");
+  if (!roomCode) return;
 
   try {
-    const res = await fetch(`/api/rooms/ranking?code=${roomCode}`);
+    const res = await fetch(`${API_URL}/rooms/result-summary/${roomCode}`);
     const data = await res.json();
 
     if (!data.success) {
-      alert("랭킹 정보를 불러오는 데 실패했습니다.");
+      console.error("결과 불러오기 실패:", data.message);
       return;
     }
 
-    const tbody = document.getElementById("rankingBody");
-    data.ranking.forEach((entry, index) => {
-      const tr = document.createElement("tr");
-
-      const rankTd = document.createElement("td");
-      rankTd.textContent = index + 1;
-
-      const nameTd = document.createElement("td");
-      nameTd.textContent = entry.nickname || "익명";
-
-      const scoreTd = document.createElement("td");
-      scoreTd.textContent = entry.score || 0;
-
-      tr.appendChild(rankTd);
-      tr.appendChild(nameTd);
-      tr.appendChild(scoreTd);
-
-      tbody.appendChild(tr);
-    });
-
-  } catch (error) {
-    console.error("랭킹 조회 오류:", error);
-    alert("서버 오류로 랭킹을 불러올 수 없습니다.");
+    renderScoreRanking(data.ranking);
+    renderFastest(data.fastest);
+    renderCorrectRate(data.correctCount, data.incorrectCount);
+  } catch (err) {
+    console.error("에러 발생:", err);
   }
 });
+
+function renderScoreRanking(rankingList) {
+  const container = document.getElementById("score-ranking");
+  if (!container) return;
+
+  container.innerHTML = "";
+  rankingList.forEach((user, index) => {
+    const div = document.createElement("div");
+    div.className = "ranking-entry";
+    div.innerHTML = `<strong>${index + 1}위</strong> ${user.nickname} - ${user.score}점`;
+    container.appendChild(div);
+  });
+}
+
+function renderFastest(fastestList) {
+  const container = document.getElementById("fastest-users");
+  if (!container) return;
+
+  container.innerHTML = "";
+  fastestList.forEach((user, index) => {
+    const div = document.createElement("div");
+    div.className = "fastest-entry";
+    div.innerHTML = `<strong>${index + 1}등</strong> ${user.nickname} - ${(user.time / 1000).toFixed(2)}초`;
+    container.appendChild(div);
+  });
+}
+
+function renderCorrectRate(correct, incorrect) {
+  const total = correct + incorrect;
+  const percent = total === 0 ? 0 : Math.round((correct / total) * 100);
+  const container = document.getElementById("correct-rate");
+
+  if (!container) return;
+
+  container.innerHTML = `<h3>정답률</h3><p>${percent}% (${correct}명 / ${total}명)</p>`;
+}

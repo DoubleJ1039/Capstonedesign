@@ -10,11 +10,13 @@ import com.example.pas.repositories.RoomUserRepository;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.http.ResponseEntity;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/rooms")
@@ -535,6 +537,7 @@ public class RoomController {
         return Map.of("success", true, "message", "방 데이터가 초기화되었습니다.");
     }
 
+    // 퀴즈 종료 버튼
     @MessageMapping("/room/{code}/quizEnded")
     public void handleQuizEnded(@DestinationVariable String code) {
         Map<String, Object> payload = new HashMap<>();
@@ -542,4 +545,48 @@ public class RoomController {
         messagingTemplate.convertAndSend("/topic/room/" + code, payload);
     }
 
+    // 퀴즈 결과
+    @GetMapping("/result-summary/{code}")
+    public ResponseEntity<?> getRoomRankingSummary(@PathVariable String code) {
+        List<RoomUser> users = roomUserRepository.findByRoomCode(code);
+
+        if (users == null || users.isEmpty()) {
+            return ResponseEntity.ok(Map.of("success", false, "message", "참여자 정보 없음"));
+        }
+
+        // 점수 랭킹 정렬
+        List<Map<String, Object>> ranking = users.stream()
+                .sorted(Comparator.comparingInt(RoomUser::getTotalScore).reversed())
+                .map(u -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("nickname", u.getNickname());
+                    map.put("score", u.getTotalScore());
+                    return map;
+                })
+                .collect(Collectors.toList());
+
+        // 빠른 정답자 계산
+        List<Map<String, Object>> fastest = users.stream()
+                .filter(u -> u.getSubmitTime() != null)
+                .map(u -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("nickname", u.getNickname());
+                    map.put("time", u.getSubmitTime());
+                    return map;
+                })
+                .sorted(Comparator.comparingLong(e -> (Long) e.get("time")))
+                .limit(3)
+                .collect(Collectors.toList());
+
+        // 전체 정답 수
+        long correct = users.stream().filter(RoomUser::isCorrect).count();
+        long incorrect = users.size() - correct;
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "ranking", ranking,
+                "fastest", fastest,
+                "correctCount", correct,
+                "incorrectCount", incorrect));
+    }
 }

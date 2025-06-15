@@ -131,7 +131,7 @@ async function loadRooms(loggedInUser) {
         imgWrapper.className = "room-image-wrapper";
 
         const img = document.createElement("img");
-        img.src = room.imageUrl || "images/noimg.png";
+        img.src = room.imageUrl || "images/noduck.png";
         img.alt = "Room Image";
         img.className = "room-image";
 
