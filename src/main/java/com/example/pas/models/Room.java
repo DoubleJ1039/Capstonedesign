@@ -3,6 +3,7 @@ package com.example.pas.models;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -21,14 +22,13 @@ public class Room {
     private Map<String, String> participants;
     private List<String> anonymousQuestions;
     private Long endTime;
-    private Map<Integer, Map<String, Long>> submitTimes;
     private List<que> testQuestions;
 
     private boolean started = false;
     private int currentQuestionIndex = 0;
 
     private Map<String, Integer> scores;
-    private Map<String, List<Boolean>> answers;
+    private Map<String, Object> submitTimes = new HashMap<>();
 
     public Room() {
     }
@@ -139,14 +139,6 @@ public class Room {
         this.scores = scores;
     }
 
-    public Map<String, List<Boolean>> getAnswers() {
-        return answers;
-    }
-
-    public void setAnswers(Map<String, List<Boolean>> answers) {
-        this.answers = answers;
-    }
-
     public Long getEndTime() {
         return endTime;
     }
@@ -155,11 +147,11 @@ public class Room {
         this.endTime = endTime;
     }
 
-    public Map<Integer, Map<String, Long>> getSubmitTimes() {
+    public Map<String, Object> getSubmitTimes() {
         return submitTimes;
     }
 
-    public void setSubmitTimes(Map<Integer, Map<String, Long>> submitTimes) {
+    public void setSubmitTimes(Map<String, Object> submitTimes) {
         this.submitTimes = submitTimes;
     }
 }

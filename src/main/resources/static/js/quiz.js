@@ -39,6 +39,31 @@ document.addEventListener("DOMContentLoaded", async () => {
       await showResult();
       document.getElementById("showResultBtn").style.display = "none";
     });
+
+    const endBtn = document.getElementById("endQuizBtn");
+    if (endBtn) {
+      endBtn.addEventListener("click", () => {
+        stompClient.send(`/app/room/${roomCode}/endQuiz`, {}, JSON.stringify({
+          type: "quizEnded"
+        }));
+
+        window.location.href = `/ranking.html?code=${roomCode}`;
+      });
+    }
+  }
+
+  const closeBtn = document.getElementById("closeResultBtn");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      document.getElementById("resultModal").style.display = "none";
+
+      if (isHost && currentQuestionIndex === questions.length - 1) {
+        const endBtn = document.getElementById("endQuizBtn");
+        if (endBtn) {
+          endBtn.style.display = "inline-block";
+        }
+      }
+    });
   }
 });
 
@@ -394,6 +419,10 @@ function connectWebSocket() {
         document.getElementById("resultModal").style.display = "none";
       }
 
+      if (data.type === "quizEnded") {
+        window.location.href = `/ranking.html?code=${roomCode}`;
+      }
+
       if (data.type === "chat") {
         const nickname = data.nickname;
         const message = data.message;
@@ -418,6 +447,13 @@ function connectWebSocket() {
   });
 }
 
+document.getElementById("endQuizBtn").addEventListener("click", () => {
+  if (isHost && stompClient) {
+    stompClient.send(`/app/room/${roomCode}/quizEnded`, {}, JSON.stringify({
+      type: "quizEnded"
+    }));
+  }
+});
   
 function sendQuestionIndex(index) {
   if (stompClient && stompClient.connected) {
@@ -592,177 +628,229 @@ function renderCurrentChart(index) {
 }
 
 // 결과 모달 업데이트 함수
-let scoreChart = null;
-let fastChart = null;
+let multipleChart = null;
+let multipleCorrectChart = null;
+let oxChart = null;
+let oxCorrectChart = null;
+
 function updateResultModal(data) {
-  Chart.register(ChartDataLabels);
-  const isMobile = window.innerWidth <= 768;
+  const question = questions[currentQuestionIndex];
+  const type = question?.type;
 
-  document.getElementById("correctRateText").textContent = `${data.correctRate}%`;
-
-  const correctRate = data.correctRate;
-  const totalParticipants = Math.max(data.ranking.length, 1);
-  const correctCount = Math.round((correctRate / 100) * totalParticipants);
-  const incorrectCount = totalParticipants - correctCount;
-  renderCorrectRateChart(correctCount, incorrectCount);
-
-  const podiumRanking = [data.ranking[1], data.ranking[0], data.ranking[2]].map(entry => {
-    return entry || { nickname: "-", score: 0 };
+  ["result-multiple", "result-ox", "result-short"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.style.display    = "none";
+      el.style.position   = "absolute";
+      el.style.top        = "-9999px";
+      el.style.left       = "-9999px";
+      el.style.visibility = "hidden";
+      el.classList.remove("active", "next", "prev");
+    }
   });
 
-  const fullRanking = [data.ranking[0], data.ranking[1], data.ranking[2]].map(entry => {
-    return entry || { nickname: "-", score: 0 };
-  });
-
-  const scoreList = document.getElementById("scoreRankingList");
-  scoreList.innerHTML = "";
-  fullRanking.forEach((entry, i) => {
-    const li = document.createElement("li");
-    li.textContent = `${i + 1}. ${entry.nickname} (${entry.score}점)`;
-    scoreList.appendChild(li);
-  });
-
-  const podiumFastest = [data.fastest[1], data.fastest[0], data.fastest[2]].map(entry => {
-    return entry || { nickname: "-", time: 0 };
-  });
-
-  const fastList = document.getElementById("fastestList");
-  fastList.innerHTML = "";
-  podiumFastest.forEach((entry, i) => {
-    const li = document.createElement("li");
-    li.textContent = `${i + 1}. ${entry.nickname} (${entry.time.toFixed(1)}초)`;
-    fastList.appendChild(li);
-  });
-
-  const scoreCtx = document.getElementById("scorePodiumChart")?.getContext("2d");
-  if (scoreCtx) {
-    if (scoreChart) scoreChart.destroy();
-    scoreChart = new Chart(scoreCtx, {
-      type: "bar",
-      data: {
-        labels: ["🥈", "🥇", "🥉"],
-        datasets: [{
-          data: [25, 35, 15],
-          backgroundColor: ["#C0C0C0", "#FFD700", "#CD7F32"]
-        }]
-      },
-      options: {
-        maintainAspectRatio: false,
-        responsive: true,
-        indexAxis: "x",
-        plugins: {
-          legend: { display: false },
-          tooltip: { enabled: false },
-          datalabels: {
-            anchor: "end",
-            align: isMobile ? "top" : "end",
-            color: "#000",
-            font: {
-              weight: "bold",
-              size: isMobile ? 8 : 14
-            },
-            formatter: (value, ctx) => podiumRanking[ctx.dataIndex].nickname,
-            clip: false
-          }
-        },
-        layout: {
-          padding: {
-            top: isMobile ? 30 : 10
-          }
-        },
-        maintainAspectRatio: false,
-        scales: {
-          x: { display: false, grid: { display: false } },
-          y: {
-    display: false,
-    grid: { display: false },
-    suggestedMin: 0,
-    suggestedMax: 100
-  }
-        },
-        elements: {
-          bar: {
-            borderRadius: 5,
-            barThickness: "flex",
-            categoryPercentage: 1.0,
-            barPercentage: 1.0
-          }
-        }
-      },
-      plugins: [ChartDataLabels]
-    });
+  let activeSectionId = "";
+  if (type === "multiple") {
+    activeSectionId = "result-multiple";
+    renderMultipleCharts(data, question);
+  } else if (type === "ox") {
+    activeSectionId = "result-ox";
+    renderOXCharts(data, question);
+  } else if (type === "short") {
+    activeSectionId = "result-short";
+    renderShortAnswerResults(data);
   }
 
-  const fastCtx = document.getElementById("fastPodiumChart")?.getContext("2d");
-  if (fastCtx) {
-    if (fastChart) fastChart.destroy();
-    fastChart = new Chart(fastCtx, {
-      type: "bar",
-      data: {
-        labels: ["🥈", "🥇", "🥉"],
-        datasets: [{
-          data: [25, 35, 15],
-          backgroundColor: ["#C0C0C0", "#FFD700", "#CD7F32"]
-        }]
-      },
-      options: {
-        maintainAspectRatio: false,
-        responsive: true,
-        indexAxis: "x",
-        plugins: {
-          legend: { display: false },
-          tooltip: { enabled: false },
-          datalabels: {
-            anchor: "end",
-            align: isMobile ? "top" : "end",
-            color: "#000",
-            font: {
-              weight: "bold",
-              size: isMobile ? 8 : 14
-            },
-            formatter: (value, ctx) => podiumFastest[ctx.dataIndex].nickname,
-            clip: false
-          }
-        },
-        layout: {
-          padding: {
-            top: isMobile ? 30 : 10
-          }
-        },
-        maintainAspectRatio: false,
-        scales: {
-          x: { display: false, grid: { display: false } },
-          y: {
-    display: false,
-    grid: { display: false },
-    suggestedMin: 0,
-    suggestedMax: 100
-  }
-        },
-        elements: {
-          bar: {
-            borderRadius: 5,
-            barThickness: "flex",
-            categoryPercentage: 1.0,
-            barPercentage: 1.0
-          }
-        }
-      },
-      plugins: [ChartDataLabels]
-    });
+  if (activeSectionId) {
+    const el = document.getElementById(activeSectionId);
+    el.style.display    = "block";
+    el.style.position   = "relative";
+    el.style.top        = "auto";
+    el.style.left       = "auto";
+    el.style.visibility = "visible";
+    el.classList.add("active");
+    el.classList.remove("next", "prev");
   }
 
-  const closeBtn = document.getElementById("closeResultBtn");
-  closeBtn.style.display = isHost ? "inline-block" : "none";
+  const prevBtn = document.getElementById("prevSlideBtn");
+  const nextBtn = document.getElementById("nextSlideBtn");
+
+  if (type === "short") {
+    prevBtn.style.display = "none";
+    nextBtn.style.display = "none";
+  } else {
+    prevBtn.style.display = "block";
+    nextBtn.style.display = "block";
+  }
+
+  document.getElementById("closeResultBtn").style.display = isHost ? "inline-block" : "none";
   document.getElementById("resultModal").style.display = "block";
 
   if (window.innerWidth <= 768) {
-    initializeMobileSlides();
+    if (type === "multiple") {
+      setupMultipleMobileSlides();
+    } else if (type === "ox") {
+      initializeOXMobileSlides();
+    } else {
+      initializeMobileSlides();
+    }
+  }
+}
+
+function renderMultipleCharts(data, question) {
+  const canvas2 = document.getElementById("multipleCorrectChart");
+
+  if (multipleCorrectChart) multipleCorrectChart.destroy();
+  const barsContainer = document.querySelector(".multiple-bars");
+  barsContainer.innerHTML = "";
+
+  const allIndexes = question.choices.map((_, idx) => idx);
+  const counts = allIndexes.map(idx => data.choiceCounts?.[idx] ?? 0);
+  const total = counts.reduce((sum, c) => sum + c, 0);
+  const safeTotal = total > 0 ? total : 1;
+
+  allIndexes.forEach(idx => {
+    const count = data.choiceCounts?.[idx] ?? 0;
+    const percent = Math.round((count / safeTotal) * 100);
+    const bar = document.createElement("div");
+    bar.className = "multiple-bar";
+    const labelDiv = document.createElement("div");
+    labelDiv.className = "multiple-bar-label";
+    labelDiv.textContent = `${idx + 1}번\n(${count}명)`;
+    const graphDiv = document.createElement("div");
+    graphDiv.className = "multiple-bar-graph";
+    const fillDiv = document.createElement("div");
+    fillDiv.className = "multiple-bar-fill";
+    if (percent > 0) {
+      fillDiv.style.width = `${percent}%`;
+    } else {
+      fillDiv.style.width = "1cm";
+    }
+
+    graphDiv.appendChild(fillDiv);
+    bar.appendChild(labelDiv);
+    bar.appendChild(graphDiv);
+    barsContainer.appendChild(bar);
+  });
+
+  const correct = data.correctCount || 0;
+  const wrong = data.incorrectCount || 0;
+  multipleCorrectChart = new Chart(canvas2.getContext("2d"), {
+    type: "doughnut",
+    data: {
+      labels: ["정답자", "오답자"],
+      datasets: [{
+        data: [correct, wrong],
+        backgroundColor: ["#4CAF50", "#F44336"]
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: true, position: "bottom" },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.label}: ${ctx.raw}명`
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderOXCharts(data, question) {
+  const correctCanvas = document.getElementById("oxCorrectChart");
+  const oCount = data.choiceCounts?.O || 0;
+  const xCount = data.choiceCounts?.X || 0;
+  const oCountElement = document.getElementById("oxOCount");
+  const xCountElement = document.getElementById("oxXCount");
+  if (oCountElement) oCountElement.textContent = `${oCount}명`;
+  if (xCountElement) xCountElement.textContent = `${xCount}명`;
+
+  if (oxCorrectChart) oxCorrectChart.destroy();
+
+  if (correctCanvas) {
+    oxCorrectChart = new Chart(correctCanvas.getContext("2d"), {
+      type: "doughnut",
+      data: {
+        labels: ["정답자", "오답자"],
+        datasets: [{
+          data: [data.correctCount || 0, data.incorrectCount || 0],
+          backgroundColor: ["#4CAF50", "#F44336"],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: false,
+        animation: {
+          duration: 600,
+          easing: 'easeOutCubic'
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: "bottom"
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => `${ctx.label}: ${ctx.raw}명`
+            }
+          }
+        }
+      }
+    });
+  }
+}
+
+function renderShortAnswerResults(data) {
+  const container = document.getElementById("shortPostits");
+  container.innerHTML = "";
+
+  const wrongAnswers = data.wrongAnswers || [];
+  const shuffled = wrongAnswers.sort(() => 0.5 - Math.random());
+  const selected = shuffled.slice(0, 10);
+
+  while (selected.length < 10) {
+    selected.push("❌");
+  }
+
+  selected.forEach(answer => {
+    const div = document.createElement("div");
+    div.className = "postit";
+    div.textContent = answer;
+    container.appendChild(div);
+  });
+
+  renderShortGaugeBar(data.correctCount || 0, data.incorrectCount || 0);
+}
+
+
+//주관식 막대 그래프
+function renderShortGaugeBar(correctCount, incorrectCount) {
+  const total = correctCount + incorrectCount;
+  const safeTotal = total > 0 ? total : 1;
+
+  const correctRatio = (correctCount / safeTotal) * 100;
+  const wrongRatio = 100 - correctRatio;
+
+  const correctBar = document.getElementById("gauge-correct");
+  const wrongBar = document.getElementById("gauge-wrong");
+  const rateBox = document.getElementById("shortGaugeRate");
+
+  correctBar.style.width = `${correctRatio}%`;
+  wrongBar.style.width = `${wrongRatio}%`;
+
+  const roundedRate = total > 0 ? Math.round(correctRatio) : 0;
+
+  if (rateBox) {
+    rateBox.textContent = `정답률: ${roundedRate}%`;
   }
 }
 
 // 모바일 슬라이드 초기화 함수
 function initializeMobileSlides() {
+  if (questions[currentQuestionIndex]?.type === "multiple") return;
+
   const sections = document.querySelectorAll('.result-section');
   let currentIndex = 0;
 
@@ -773,49 +861,31 @@ function initializeMobileSlides() {
     }
   });
 
-  document.getElementById('prevSlideBtn').addEventListener('click', () => {
+  document.getElementById('prevSlideBtn').onclick = () => {
     if (currentIndex > 0) {
       sections[currentIndex].classList.remove('active');
       sections[currentIndex].classList.add('next');
       currentIndex--;
       sections[currentIndex].classList.remove('prev');
       sections[currentIndex].classList.add('active');
-
-      if (currentIndex === 1) {
-        const correctRate = parseFloat(document.getElementById("correctRateText").textContent);
-        const totalParticipants = document.querySelectorAll("#scoreRankingList li").length;
-        const correctCount = Math.round((correctRate / 100) * totalParticipants);
-        const incorrectCount = totalParticipants - correctCount;
-        renderCorrectRateChart(correctCount, incorrectCount);
-      }
     }
-  });
+  };
 
-  document.getElementById('nextSlideBtn').addEventListener('click', () => {
+  document.getElementById('nextSlideBtn').onclick = () => {
     if (currentIndex < sections.length - 1) {
-
       sections[currentIndex].classList.remove('active');
       sections[currentIndex].classList.add('prev');
-
       currentIndex++;
       sections[currentIndex].classList.remove('next');
       sections[currentIndex].classList.add('active');
-
-      if (currentIndex === 1) {
-        const correctRate = parseFloat(document.getElementById("correctRateText").textContent);
-        const totalParticipants = document.querySelectorAll("#scoreRankingList li").length;
-        const correctCount = Math.round((correctRate / 100) * totalParticipants);
-        const incorrectCount = totalParticipants - correctCount;
-        renderCorrectRateChart(correctCount, incorrectCount);
-      }
     }
-  });
+  };
 }
 
 //결과보기 함수
 async function showResult() {
   try {
-    const userEmail = await getDecryptedEmail();  // 이메일 복호화
+    const userEmail = await getDecryptedEmail();
 
     const res = await fetch(`${API_URL}/rooms/result/${roomCode}/${currentQuestionIndex}?userId=${userEmail}`);
     const data = await res.json();
@@ -825,17 +895,37 @@ async function showResult() {
       return;
     }
 
+    console.log("[DEBUG] result data:", data);
+
+    const question = questions[currentQuestionIndex];
+
+    const correctCount = data.correctRate
+      ? Math.round(data.correctRate / 100 * (data.ranking?.length || 1))
+      : 0;
+    const total = data.ranking?.length || 0;
+    const incorrectCount = total - correctCount;
+
+    // 공통 필드로 설정
+    data.correctCount = correctCount;
+    data.incorrectCount = incorrectCount;
+
+    if (question.type === "multiple" || question.type === "ox") {
+      data.choiceCounts = data.choiceCounts || {};
+    }
+
+    if (question.type === "short") {
+      data.wrongAnswers = data.shortAnswers || [];
+    }
+
+    // 결과 모달 업데이트
     updateResultModal(data);
 
+    // WebSocket 전송 (방장만)
     if (isHost && stompClient?.connected) {
       stompClient.send(`/app/room/${roomCode}/showResult`, {}, JSON.stringify({
         type: "showResult",
-        correctRate: data.correctRate,
-        ranking: data.ranking,
-        fastest: data.fastest
+        ...data
       }));
-    } else if (!isHost) {
-      console.log("[showResult] 참가자 화면이므로 결과 송신하지 않음");
     }
 
     if (isHost) {
@@ -987,6 +1077,99 @@ messageInput.addEventListener("keydown", (e) => {
   }
 });
 
+//객관식 슬라이드 모바일
+function setupMultipleMobileSlides() {
+  const pie  = document.querySelector("#result-multiple .multiple-pie");
+  const bars = document.querySelector("#result-multiple .multiple-bars");
+  const leftBtn = document.getElementById("prevSlideBtn");
+  const rightBtn = document.getElementById("nextSlideBtn");
+
+  if (!pie || !bars || !leftBtn || !rightBtn) return;
+
+  let currentPage = 0;
+
+  function updateSlides() {
+    if (currentPage === 0) {
+      pie.classList.add("active");
+      pie.classList.remove("next", "prev");
+
+      bars.classList.remove("active");
+      bars.classList.add("next");
+
+      leftBtn.style.display = "none";
+      rightBtn.style.display = "block";
+    } else {
+      bars.classList.add("active");
+      bars.classList.remove("next", "prev");
+
+      pie.classList.remove("active");
+      pie.classList.add("prev");
+
+      leftBtn.style.display = "block";
+      rightBtn.style.display = "none";
+    }
+  }
+
+  currentPage = 0;
+  updateSlides();
+
+  rightBtn.onclick = () => {
+    currentPage = 1;
+    updateSlides();
+  };
+
+  leftBtn.onclick = () => {
+    currentPage = 0;
+    updateSlides();
+  };
+}
+
+//주관식 슬라이드 모바일
+function initializeOXMobileSlides() {
+  const oxWrapper = document.querySelector("#result-ox .result-ox-wrapper");
+  const sections = Array.from(oxWrapper.querySelectorAll(".ox-column"));
+  let currentIndex = 1; // 중앙(차트)부터 시작
+
+  // ✅ 각 ox-column에 .ox-image 없으면 자동 생성
+  sections.forEach((column, index) => {
+    let imageDiv = column.querySelector('.ox-image');
+    if (!imageDiv) {
+      imageDiv = document.createElement('div');
+      imageDiv.classList.add('ox-image');
+      column.insertBefore(imageDiv, column.firstChild);
+    }
+  });
+
+  // ✅ 슬라이드 보여주기
+  function showSlide(index) {
+    sections.forEach((el, i) => {
+      el.classList.remove("active", "prev", "next");
+      if (i === index) el.classList.add("active");
+      else if (i < index) el.classList.add("prev");
+      else el.classList.add("next");
+    });
+  }
+
+  showSlide(currentIndex);
+
+  const prevBtn = document.getElementById("prevSlideBtn");
+  const nextBtn = document.getElementById("nextSlideBtn");
+
+  prevBtn.onclick = () => {
+    if (currentIndex > 0) {
+      currentIndex--;
+      showSlide(currentIndex);
+    }
+  };
+
+  nextBtn.onclick = () => {
+    if (currentIndex < sections.length - 1) {
+      currentIndex++;
+      showSlide(currentIndex);
+    }
+  };
+}
+
 //모바일 채팅 팝업 열기/닫기 이벤트 처리
 function setupMobileChatEvents() {
   const mobileChatBtn = document.getElementById("mobileChatBtn");
@@ -1007,7 +1190,6 @@ function setupMobileChatEvents() {
     });
   }
 }
-
 
 //모바일 채팅 메시지 전송 함수
 function setupMobileChatSend() {
@@ -1053,8 +1235,6 @@ document.getElementById("exitQuizBtn").addEventListener("click", () => {
 function showPreviousQuestion() {
   if (currentQuestionIndex > 0) {
     const newIndex = currentQuestionIndex - 1;
-    
-    // 방장인 경우에만 서버에 인덱스 변경 요청
     if (isHost) {
       fetch(`${API_URL}/ws/questionIndex/${roomCode}`, {
         method: "POST",

@@ -1,0 +1,53 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Arial', sans-serif;
+  background: #f4f7fa;
+  color: #333;
+}
+
+.ranking-container {
+  max-width: 600px;
+  margin: 60px auto;
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+h1 {
+  margin-bottom: 10px;
+  font-size: 28px;
+}
+
+#roomCodeDisplay {
+  margin-bottom: 30px;
+  font-size: 16px;
+  color: #666;
+}
+
+.ranking-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.ranking-table th,
+.ranking-table td {
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+}
+
+.ranking-table th {
+  background-color: #BFD8E2;
+  color: white;
+}
+
+.ranking-table tr:nth-child(odd) {
+  background-color: #f9f9f9;
+}
+
+.ranking-table tr:first-child td {
+  font-weight: bold;
+}

@@ -328,12 +328,9 @@ html, body {
 
 /* OX 선택지 컨테이너 스타일 추가 */
 .choice-count-2.ox-choices {
-  /* OX 선택지를 가로로 배치하기 위한 Flexbox 설정 */
   display: flex !important;
   justify-content: center;
-  /* OX 버튼 사이의 간격 설정 */
   gap: 40px;
-  /* 기존 grid 레이아웃 설정 무시 */
   grid-template-columns: none !important;
 }
 
@@ -480,96 +477,8 @@ html, body {
   transform: translateY(-1px);
 }
 
-.result-modal {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
-.result-modal-content {
-  background: white;
-  padding: 30px 40px;
-  border-radius: 12px;
-  width: 100vw;
-  height: 100vh;
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 20px;
-}
-
-.result-titles, .result-contents {
-  display: flex;
-  justify-content: space-around;
-  align-items: flex-start;
-  width: 100%;
-  height: 100%;
-  margin-top: 10px;
-}
-
-.result-contents > div, .result-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  height: 100%;
-}
-
-.result-section canvas {
-  margin-top: 0;
-  margin-bottom: 20px;
-}
-
-.result-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-}
-
 canvas {
   pointer-events: none;
-}
-
-.result-section:nth-child(2) {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding-top: 20px;
-}
-
-#correctRateChart {
-  transform: none !important;
-  margin-top: 10px;
-}
-
-#correctRateText {
-  display: inline-block;
-  font-size: 16px;
-  text-align: center;
-  margin-bottom: 10px;
-}
-
-#closeResultBtn {
-  margin-top: 20px;
-  padding: 10px 20px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  cursor: pointer;
-  z-index: 10;
 }
 
 #mobileChatBox.open {
@@ -580,14 +489,282 @@ canvas {
   display: none;
 }
 
-/* 포디움 */
-#scorePodiumChart,
-#fastPodiumChart {
-  transform: translateY(-483px);
-  margin-bottom: -270px;
-  width: 500px;
-  height: 200px;
-  margin: 0px auto 10 auto;
+/* 결과 모달 */
+#resultModal {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.result-modal-content {
+  width: 90vw;
+  height: 80vh;
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  gap: 30px;
+  overflow-y: auto;
+
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  overflow: hidden !important;
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+}
+
+.result-header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  gap: 20px;
+}
+
+.result-header-center h2 {
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  margin: 0;
+}
+
+#closeResultBtn {
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: black;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin: 0 auto;
+}
+
+#closeResultBtn:hover {
+  background-color: gray;
+}
+
+/* 객관식 결과 모달 */
+#result-multiple {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: flex-start;
+  padding: 30px 40px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  gap: 40px;
+  align-self: stretch;
+}
+
+.multiple-bars {
+  width: 55%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 90px;
+}
+
+.multiple-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.multiple-bar-label {
+  width: 80px;
+  font-weight: bold;
+  text-align: right;
+  white-space: nowrap;
+  font-size: 16px;
+}
+
+.multiple-bar-graph {
+  flex: 1;
+  height: 20px;
+  background-color: #e0e0e0;
+  border-radius: 12px;
+  position: relative;
+}
+
+.multiple-bar-fill {
+  height: 100%;
+  background-color: #4CAF50;
+  border-radius: 12px;
+  transition: width 0.4s ease;
+  min-width: 1cm;
+}
+
+.multiple-pie {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#multipleCorrectChart {
+  width: 420px !important;
+  height: 420px !important;
+  margin-top: 0px;
+}
+
+/* o/x 결과 모달 */
+#result-ox {
+  position: static !important;
+  overflow: visible !important;
+  height: auto !important;
+}
+
+.result-modal-content .result-ox-wrapper {
+  position: absolute !important;
+  top: 200px !important;    
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  
+  display: flex !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
+  gap: 160px !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+  width: auto !important;
+  box-sizing: border-box !important;
+  z-index: 5 !important;
+}
+
+.result-modal-content .ox-column {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  text-align: center !important;
+  gap: 10px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.result-modal-content .ox-column .ox-image {
+  width: 300px !important;
+  height: 300px !important;
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  margin: 0 !important;
+  animation: none !important;
+  transition: none !important;
+}
+
+.result-modal-content .ox-column .ox-count {
+  font-size: 18px !important;
+  font-weight: bold !important;
+  color: #333 !important;
+  margin: 0 !important;
+}
+
+#oxCorrectChart {
+  display: block !important;
+  width: 300px !important;
+  height: 300px !important;
+  margin-top: 10px !important;
+}
+
+/* 주관식 */
+#result-short {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.postit-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+#shortWrongTitle {
+  font-size: 20px;
+  font-weight: bold;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.postit {
+  width: 100px;
+  height: 100px;
+  background-color: #fffa87;
+  border: 2px solid #f0e68c;
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+  font-size: 14px;
+  padding: 10px;
+  word-break: break-word;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 게이지 전체 wrapper */
+.short-gauge-wrapper {
+  width: 60%;
+  margin: 40px auto 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 바틀 바(배경) */
+.short-gauge-bar {
+  width: 100%;
+  height: 20px;
+  background-color: #eee;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+}
+
+.gauge-fill {
+  height: 100%;
+  transition: width 0.6s ease;
+}
+
+.gauge-fill.correct {
+  background-color: #4CAF50;
+}
+
+.gauge-fill.wrong {
+  background-color: #F44336;
+}
+
+/* 정답률 텍스트 */
+.short-gauge-rate {
+  margin-top: 12px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
 }
 
 /* 슬라이드 컨트롤 버튼: 모바일에서만 보이게 */
@@ -649,45 +826,35 @@ canvas {
     font-size: 16px;
   }
 
-  /* 모바일에서 객관식 보기 1열 배치 설정 */
   .choices-list {
     grid-gap: 15px;
     margin-top: 0.5cm;
     padding: 0 10px;
-    /* 모든 선택지를 1열로 강제 변경 */
     grid-template-columns: 1fr !important;
   }
 
-  /* 2개, 3개, 4개 보기 모두 1열로 통일 */
   .choice-count-2,
   .choice-count-3,
   .choice-count-4 {
     grid-template-columns: 1fr !important;
-    /* 기존 grid-area 레이아웃 해제 */
     grid-template-areas: none !important;
   }
 
-  /* 3개 보기일 때 사용하던 특별 배치 해제 */
   .choice-count-3 li:nth-child(1),
   .choice-count-3 li:nth-child(2),
   .choice-count-3 li:nth-child(3) {
     grid-area: auto !important;
   }
 
-  /* 모바일에서 OX 버튼 크기 최적화 */
   .ox-choice-item {
-    /* 모바일에 맞게 크기 축소 */
     width: 120px;
     height: 120px;
-    /* 상단 여백 조정 */
     margin-top: 1cm;
   }
 
-  /* 모바일에서 OX 선택지 가로 배치 유지 */
   .choice-count-2.ox-choices {
     display: flex !important;
     justify-content: center;
-    /* 모바일에서는 간격을 좁게 조정 */
     gap: 20px;
     grid-template-columns: none !important;
   }
@@ -831,18 +998,19 @@ canvas {
   z-index: 1;
 }
 
-/* 슬라이드 컨트롤 버튼 */
 .slide-controls {
-  display: flex;
-  justify-content: space-between;
   position: absolute;
   top: 50%;
-  width: 100%;
-  transform: translateY(-50%);
+  left: 0;
+  right: 0;
   z-index: 10;
+  pointer-events: none; /* 클릭 안되는 영역 피하기 위해 버튼에만 포인터 */
 }
 
 .slide-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
   background-color: rgba(0, 0, 0, 0.5);
   color: white;
   border: none;
@@ -854,6 +1022,15 @@ canvas {
   display: flex;
   align-items: center;
   justify-content: center;
+  pointer-events: auto;
+}
+
+#prevSlideBtn {
+  left: 10px;
+}
+
+#nextSlideBtn {
+  right: 10px;
 }
 
 /* 모바일 채팅 팝업 전체 */
@@ -1014,26 +1191,228 @@ canvas {
   resize: none;
 }
 
-  /* 점수 랭킹 텍스트 숨기기 */
-  .result-section:nth-child(1) ul,
-  .result-section:nth-child(1) li,
-  .result-section:nth-child(1) p,
-  .result-section:nth-child(1) span,
-  .result-section:nth-child(1) div:not(canvas) {
-    display: none !important;
+ /* 객관식 결과 슬라이드*/
+  #result-multiple {
+    position: relative;
+    overflow: hidden;
   }
 
-  /* 빠르게 푼 사람 텍스트 숨기기 */
-  .result-section:nth-child(3) ul,
-  .result-section:nth-child(3) li,
-  .result-section:nth-child(3) p,
-  .result-section:nth-child(3) span,
-  .result-section:nth-child(3) div:not(canvas) {
-    display: none !important;
+    #multipleCorrectChart {
+    width: 300px !important;
+    height: 300px !important;
+    display: block;
+    margin: 0 auto;
   }
 
-  .result-section:nth-child(1) canvas,
-  .result-section:nth-child(3) canvas {
-    display: block !important;
+  .multiple-pie {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-right: 60px;
+  box-sizing: border-box;
+}
+
+.multiple-bars {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.multiple-bar {
+  margin-left: 0;
+  padding-left: 0;
+}
+
+.multiple-bar-label {
+  width: 40px;
+  margin: 0;
+  padding: 0;
+  text-align: right;
+  font-size: 12px;
+}
+
+.multiple-bar-graph {
+  flex: 1;
+  margin-left: 0px;
+  max-width: 350px;
+}
+
+.multiple-bar-fill {
+  min-width: 0;
+}
+
+  .multiple-pie, .multiple-bars {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .multiple-pie.active,
+  .multiple-bars.active {
+    opacity: 1;
+    visibility: visible;
+    position: relative;
+    transform: translateX(0);
+    z-index: 2;
+  }
+
+  .multiple-pie.prev, .multiple-bars.prev {
+    transform: translateX(-100%);
+    z-index: 1;
+  }
+
+  .multiple-pie.next, .multiple-bars.next {
+    transform: translateX(100%);
+    z-index: 1;
+  }
+
+  /* o/x */
+    #result-ox .ox-column:nth-child(1) .ox-image {
+    background-image: url('/images/o.png') !important;
+    background-size: contain !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    z-index: 5 !important;
+  }
+  #result-ox .ox-column:nth-child(3) .ox-image {
+    background-image: url('/images/x.png') !important;
+    background-size: contain !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    z-index: 5 !important;
+  }
+
+  /* ─── 슬라이드 스타일 그대로 유지 ─── */
+  #result-ox .ox-column {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    visibility: hidden;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #result-ox .ox-column.active {
+    opacity: 1;
+    visibility: visible;
+    z-index: 2;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+
+  #result-ox .ox-column.prev {
+    transform: translateX(-100%);
+    z-index: 1;
+  }
+
+  #result-ox .ox-column.next {
+    transform: translateX(100%);
+    z-index: 1;
+  }
+
+  /*주관식 모바일일 */
+   #result-short {
+    padding-top: 4px !important;
+    margin-top: 0 !important;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .result-header-center {
+    margin-bottom: 1px !important;
+    gap: 1px !important;
+  }
+
+    #result-short ~ .result-modal-content {
+    top: 35% !important;
+    transform: translate(-50%, -35%) !important;
+  }
+
+  #closeResultBtn {
+    margin-bottom: 1px !important;
+  }
+
+  #shortWrongTitle {
+    margin-top: 5px !important;
+    margin-bottom: 1px !important;
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  .postit-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 0 !important;
+    margin-bottom: 8px !important;
+  }
+
+  .postit {
+    width: 100px;
+    height: 100px;
+    background-color: #fffa87;
+    border: 2px solid #f0e68c;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+    font-size: 14px;
+    padding: 10px;
+    word-break: break-word;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .short-gauge-wrapper {
+    width: 60%;
+    margin: 10px auto 0 auto !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .short-gauge-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #eee;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+  }
+
+  .gauge-fill {
+    height: 100%;
+    transition: width 0.6s ease;
+  }
+
+  .gauge-fill.correct {
+    background-color: #4CAF50;
+  }
+
+  .gauge-fill.wrong {
+    background-color: #F44336;
+  }
+
+  .short-gauge-rate {
+    margin-top: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    text-align: center;
   }
 }

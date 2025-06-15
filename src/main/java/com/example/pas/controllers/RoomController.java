@@ -5,6 +5,12 @@ import com.cloudinary.utils.ObjectUtils;
 import com.example.pas.models.Room;
 import com.example.pas.models.que;
 import com.example.pas.repositories.RoomRepository;
+import com.example.pas.models.RoomUser;
+import com.example.pas.repositories.RoomUserRepository;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,12 +22,23 @@ import java.util.*;
 public class RoomController {
 
     private final RoomRepository roomRepository;
+    private final RoomUserRepository roomUserRepository;
     private final Cloudinary cloudinary;
+    private final SimpMessagingTemplate messagingTemplate;
+
+    private String generateRoomCode() {
+        return UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+    }
 
     @Autowired
-    public RoomController(RoomRepository roomRepository, Cloudinary cloudinary) {
+    public RoomController(RoomRepository roomRepository,
+            Cloudinary cloudinary,
+            RoomUserRepository roomUserRepository,
+            SimpMessagingTemplate messagingTemplate) {
         this.roomRepository = roomRepository;
         this.cloudinary = cloudinary;
+        this.roomUserRepository = roomUserRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
     // 방 생성
@@ -136,7 +153,6 @@ public class RoomController {
 
         Room room = roomOptional.get();
 
-        // 닉네임 설정 시에는 비밀번호 검증을 건너뜁니다
         if (nickname != null && !nickname.trim().isEmpty()) {
             Map<String, String> participants = room.getParticipants();
             if (participants == null)
@@ -156,7 +172,6 @@ public class RoomController {
             return Map.of("success", true, "message", "닉네임 등록", "nickname", nickname);
         }
 
-        // 방 참여 시에는 비밀번호 검증을 수행합니다
         if (password == null || !room.getPassword().equals(password)) {
             return Map.of("success", false, "message", "비밀번호가 틀렸습니다.");
         }
@@ -224,20 +239,19 @@ public class RoomController {
         }
 
         Map<String, String> participants = room.getParticipants();
-        if (participants != null) {
-            Map<String, Integer> scores = room.getScores();
-            if (scores == null)
-                scores = new HashMap<>();
-
+        if (participants != null && !participants.isEmpty()) {
             for (String userId : participants.keySet()) {
-                scores.put(userId, 1);
+                RoomUser user = new RoomUser();
+                user.setRoomCode(code);
+                user.setUserId(userId);
+                user.setNickname(participants.get(userId));
+                user.setTotalScore(0);
+                user.setQuestionIndex(0);
+                roomUserRepository.save(user);
             }
-
-            room.setScores(scores);
         }
 
         roomRepository.save(room);
-
         return Map.of("success", true, "message", "퀴즈 시작", "endTime", room.getEndTime());
     }
 
@@ -308,12 +322,16 @@ public class RoomController {
             return Map.of("success", false, "message", "정답 없음");
 
         boolean isCorrect = false;
+        List<Integer> selectedIndexes = new ArrayList<>();
+        String selectedOX = null;
+        String shortAnswer = null;
 
+        // 정답 비교 로직
         switch (question.getType()) {
             case "multiple" -> {
                 Object rawSelected = payload.get("selectedIndexes");
                 if (rawSelected instanceof List<?> selectedRaw) {
-                    List<Integer> selectedIndexes = selectedRaw.stream()
+                    selectedIndexes = selectedRaw.stream()
                             .map(o -> (o instanceof Integer) ? (Integer) o : Integer.parseInt(o.toString()))
                             .toList();
 
@@ -328,47 +346,59 @@ public class RoomController {
                     }
                 }
             }
+
             case "ox" -> {
-                String selected = (String) payload.get("selectedAnswer");
-                isCorrect = selected != null && selected.trim().equalsIgnoreCase(correct.toString().trim());
+                selectedOX = (String) payload.get("selectedAnswer");
+                isCorrect = matchAnswer(correct, selectedOX);
             }
+
             case "short" -> {
-                String shortAnswer = (String) payload.get("shortAnswer");
-                isCorrect = shortAnswer != null && shortAnswer.trim().equalsIgnoreCase(correct.toString().trim());
+                shortAnswer = (String) payload.get("shortAnswer");
+                isCorrect = matchAnswer(correct, shortAnswer);
             }
         }
 
-        Map<String, List<Boolean>> answers = room.getAnswers();
-        if (answers == null) {
-            answers = new HashMap<>();
-            room.setAnswers(answers);
+        // 기존 제출 데이터가 있으면 갱신, 없으면 새로 생성
+        RoomUser ru = roomUserRepository
+                .findByRoomCodeAndUserIdAndQuestionIndex(code, userId, currentIndex)
+                .orElse(new RoomUser(code, userId, currentIndex));
+
+        ru.setCorrect(isCorrect);
+        ru.setSubmitTime(System.currentTimeMillis());
+        ru.setNickname(room.getParticipants().get(userId));
+
+        if (question.getType().equals("multiple")) {
+            ru.setSelectedIndexes(selectedIndexes);
+        } else if (question.getType().equals("ox")) {
+            ru.setSelectedOX(selectedOX);
+        } else if (question.getType().equals("short")) {
+            ru.setShortAnswer(shortAnswer);
         }
 
-        answers.computeIfAbsent(userId, k -> new ArrayList<>());
-        List<Boolean> answerList = answers.get(userId);
-        while (answerList.size() <= currentIndex)
-            answerList.add(false);
-        answerList.set(currentIndex, isCorrect);
-
-        Map<String, Integer> scores = room.getScores();
-        if (scores == null) {
-            scores = new HashMap<>();
-            room.setScores(scores);
+        if (ru.getScore() == null) {
+            ru.setScore(isCorrect ? question.getScore() : 0);
         }
 
-        int scoreToAdd = isCorrect ? question.getScore() : 0;
-        scores.put(userId, scores.getOrDefault(userId, 0) + scoreToAdd);
-
-        roomRepository.save(room);
+        roomUserRepository.save(ru);
 
         return Map.of(
                 "success", true,
                 "correct", isCorrect,
-                "score", scores.get(userId));
+                "score", ru.getScore());
     }
 
-    private String generateRoomCode() {
-        return UUID.randomUUID().toString().substring(0, 4).toUpperCase();
+    private boolean matchAnswer(Object correct, Object userAnswer) {
+        if (correct == null || userAnswer == null)
+            return false;
+
+        String correctStr;
+        if (correct instanceof List<?> list && list.size() == 1) {
+            correctStr = list.get(0).toString().trim();
+        } else {
+            correctStr = correct.toString().trim();
+        }
+
+        return correctStr.equalsIgnoreCase(userAnswer.toString().trim());
     }
 
     // 문제 결과 통계 조회
@@ -381,59 +411,105 @@ public class RoomController {
         }
 
         Room room = roomOpt.get();
-
-        // 정답자 수 체크
-        int totalParticipants = room.getParticipants().size();
-        int correctCount = 0;
-
-        Map<String, List<Boolean>> answers = room.getAnswers();
-        if (answers != null) {
-            for (List<Boolean> answerList : answers.values()) {
-                if (answerList.size() > questionIndex && answerList.get(questionIndex)) {
-                    correctCount++;
-                }
-            }
+        List<que> questions = room.getTestQuestions();
+        if (questions == null || questionIndex >= questions.size()) {
+            return Map.of("success", false, "message", "문제 없음");
         }
 
-        int correctRate = (int) ((correctCount / (double) totalParticipants) * 100);
+        que currentQuestion = questions.get(questionIndex);
+        List<RoomUser> userResults = roomUserRepository.findByRoomCodeAndQuestionIndex(code, questionIndex);
 
-        // 점수 랭킹
-        List<Map.Entry<String, Integer>> rankingList = new ArrayList<>();
-        if (room.getScores() != null) {
-            rankingList.addAll(room.getScores().entrySet());
+        // 정답률 계산
+        int total = userResults.size();
+        int correctCount = (int) userResults.stream().filter(RoomUser::isCorrect).count();
+        int correctRate = (total > 0) ? (int) ((correctCount / (double) total) * 100) : 0;
+
+        // 전체 점수 랭킹 계산
+        List<RoomUser> allUserTotalScores = roomUserRepository.findByRoomCode(code);
+        Map<String, Integer> totalScores = new HashMap<>();
+        for (RoomUser ru : allUserTotalScores) {
+            totalScores.put(ru.getUserId(),
+                    totalScores.getOrDefault(ru.getUserId(), 0) + (ru.getScore() != null ? ru.getScore() : 0));
         }
-        rankingList.sort((a, b) -> b.getValue() - a.getValue());
 
-        List<Map<String, Object>> rankingResult = new ArrayList<>();
-        for (Map.Entry<String, Integer> entry : rankingList) {
+        List<Map.Entry<String, Integer>> scoreList = new ArrayList<>(totalScores.entrySet());
+        scoreList.sort((a, b) -> b.getValue() - a.getValue());
+
+        List<Map<String, Object>> ranking = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : scoreList) {
             String nickname = room.getParticipants().get(entry.getKey());
-            rankingResult.add(Map.of(
+            ranking.add(Map.of(
                     "nickname", nickname != null ? nickname : "익명",
                     "score", entry.getValue()));
         }
 
-        // 빠르게 푼 사람
-        List<Map<String, Object>> fastestResult = new ArrayList<>();
-        if (room.getSubmitTimes() != null && room.getSubmitTimes().containsKey(questionIndex)) {
-            List<Map.Entry<String, Long>> submitList = new ArrayList<>(
-                    room.getSubmitTimes().get(questionIndex).entrySet());
-            submitList.sort(Map.Entry.comparingByValue());
+        // 빠른 정답자 Top3
+        List<RoomUser> correctAndSubmitted = userResults.stream()
+                .filter(ru -> ru.isCorrect() && ru.getSubmitTime() != null)
+                .sorted(Comparator
+                        .comparingLong(ru -> ru.getSubmitTime() != null ? ru.getSubmitTime() : Long.MAX_VALUE))
+                .limit(3)
+                .toList();
 
-            for (int i = 0; i < Math.min(3, submitList.size()); i++) {
-                String nickname = room.getParticipants().get(submitList.get(i).getKey());
-                long timeTaken = submitList.get(i).getValue();
-                fastestResult.add(Map.of(
-                        "nickname", nickname != null ? nickname : "익명",
-                        "time", timeTaken / 1000.0));
+        List<Map<String, Object>> fastest = new ArrayList<>();
+        for (RoomUser ru : correctAndSubmitted) {
+            String nickname = room.getParticipants().get(ru.getUserId());
+            long timeTaken = ru.getSubmitTime();
+            fastest.add(Map.of(
+                    "nickname", nickname != null ? nickname : "익명",
+                    "time", timeTaken / 1000.0));
+        }
+
+        // 선택지 비율 계산
+        Map<Integer, Integer> multipleCount = new HashMap<>();
+        Map<String, Integer> oxCount = new HashMap<>();
+        List<String> shortAnswers = new ArrayList<>();
+
+        for (RoomUser ru : userResults) {
+            switch (currentQuestion.getType()) {
+                case "multiple" -> {
+                    if (ru.getSelectedIndexes() != null) {
+                        for (int idx : ru.getSelectedIndexes()) {
+                            multipleCount.put(idx, multipleCount.getOrDefault(idx, 0) + 1);
+                        }
+                    }
+                }
+                case "ox" -> {
+                    String selected = ru.getSelectedOX();
+                    if (selected != null) {
+                        oxCount.put(selected.toUpperCase(), oxCount.getOrDefault(selected.toUpperCase(), 0) + 1);
+                    }
+                }
+                case "short" -> {
+                    if (ru.getShortAnswer() != null && !ru.isCorrect()) {
+                        shortAnswers.add(ru.getShortAnswer());
+                    }
+                }
             }
         }
+
+        // 공통 choiceCounts로 설정
+        Map<?, ?> choiceCounts;
+        switch (currentQuestion.getType()) {
+            case "multiple" -> choiceCounts = multipleCount;
+            case "ox" -> choiceCounts = oxCount;
+            default -> choiceCounts = new HashMap<>();
+        }
+
+        // 본인 점수
+        String safeUserId = userId.replace(".", "_");
+        int myScore = totalScores.getOrDefault(safeUserId, 0);
 
         return Map.of(
                 "success", true,
                 "correctRate", correctRate,
-                "myScore", room.getScores() != null ? room.getScores().getOrDefault(userId.replace(".", "_"), 0) : 0,
-                "ranking", rankingResult,
-                "fastest", fastestResult);
+                "ranking", ranking,
+                "fastest", fastest,
+                "myScore", myScore,
+                "correctCount", correctCount,
+                "incorrectCount", total - correctCount,
+                "choiceCounts", choiceCounts,
+                "shortAnswers", shortAnswers);
     }
 
     @PutMapping("/reset/{code}")
@@ -444,16 +520,26 @@ public class RoomController {
         }
 
         Room room = roomOpt.get();
+
+        List<RoomUser> usersInRoom = roomUserRepository.findByRoomCode(code);
+        roomUserRepository.deleteAll(usersInRoom);
+
         room.setParticipants(new HashMap<>());
-        room.setScores(new HashMap<>());
-        room.setAnswers(new HashMap<>());
         room.setCurrentQuestionIndex(0);
         room.setStarted(false);
         room.setEndTime(0L);
+        room.setSubmitTimes(new HashMap<>());
 
         roomRepository.save(room);
 
         return Map.of("success", true, "message", "방 데이터가 초기화되었습니다.");
+    }
+
+    @MessageMapping("/room/{code}/quizEnded")
+    public void handleQuizEnded(@DestinationVariable String code) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("type", "quizEnded");
+        messagingTemplate.convertAndSend("/topic/room/" + code, payload);
     }
 
 }

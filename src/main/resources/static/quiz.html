@@ -58,6 +58,7 @@
             <button id="prevQuestionBtn" style="display: none;">← 이전 문제</button>
             <button id="nextQuestionBtn" style="display: none;">다음 문제 →</button>
             <button id="showResultBtn" style="display: none;">결과 보기</button>
+            <button id="endQuizBtn" style="display: none;">퀴즈 종료</button>
             <div id="questionNumberBox">
               문제 <span id="questionNumber">1</span> / <span id="totalQuestions">?</span>
             </div>
@@ -99,8 +100,10 @@
             <!-- 결과 보기 모달 -->
             <div id="resultModal" class="result-modal" role="dialog" aria-modal="true" aria-labelledby="resultModalTitle" style="display: none;">
               <div class="result-modal-content">
-                <h2 id="resultModalTitle">결과 보기</h2>
-                <button id="closeResultBtn">확인</button>
+                <div class="result-header-center">
+                  <h2 id="resultModalTitle">결과 보기</h2>
+                  <button id="closeResultBtn">확인</button>
+                </div>
 
                 <div class="slide-controls">
                   <button id="prevSlideBtn" class="slide-btn">←</button>
@@ -109,35 +112,52 @@
 
                 <div class="result-contents">
 
-                  <!-- 점수 랭킹 -->
-                  <div class="result-section">
-                    <h3>점수 랭킹</h3>
-                    <ol id="scoreRankingList"></ol>
-                    <canvas id="scorePodiumChart" aria-label="점수 랭킹 그래프" role="img"></canvas>
-                    <div class="podium-names">
-                      <div id="podium1Name" class="podium-label">-</div>
-                      <div id="podium2Name" class="podium-label">-</div>
-                      <div id="podium3Name" class="podium-label">-</div>
+                  <!-- 객관식 -->
+                  <div id="result-multiple" class="result-section">
+                    <div class="multiple-bars"></div>
+                    <div class="multiple-pie">
+                      <h3>정답자 비율</h3>
+                      <canvas id="multipleCorrectChart" width="200" height="200"></canvas>
                     </div>
                   </div>
 
-                  <!-- 정답자 비율 -->
-                  <div class="result-section">
-                    <h3>정답자 비율: <span id="correctRateText">-</span></h3>
-                    <canvas id="correctRateChart" aria-label="정답자 비율 도넛 차트" role="img"></canvas>
-                  </div>
+                  <!-- O/X 전용 -->
+                  <div id="result-ox" class="result-section">
+                    <div class="result-ox-wrapper">
+                      <div class="ox-column">
+                        <div class="ox-image" style="background-image: url('/images/O.png');"></div>
+                        <div class="ox-count" id="oxOCount">0명</div>
+                      </div>
 
-                  <!-- 빠르게 푼 TOP3 -->
-                  <div class="result-section">
-                    <h3>빠른 정답 Top3</h3>
-                    <ol id="fastestList"></ol>
-                    <canvas id="fastPodiumChart" aria-label="빠른 정답 순위 그래프" role="img"></canvas>
-                    <div class="podium-names">
-                      <div id="fast1Name" class="podium-label">-</div>
-                      <div id="fast2Name" class="podium-label">-</div>
-                      <div id="fast3Name" class="podium-label">-</div>
+                      <div class="ox-column">
+                        <h4>정답자 비율</h4>
+                        <canvas id="oxCorrectChart" width="200" height="200"></canvas>
+                      </div>
+
+                      <div class="ox-column">
+                        <div class="ox-image" style="background-image: url('/images/X.png');"></div>
+                        <div class="ox-count" id="oxXCount">0명</div>
+                      </div>
                     </div>
                   </div>
+
+                  <!-- 주관식 전용 -->
+                  <div id="result-short" style="text-align: center;">
+                    <h3 id="shortWrongTitle">오답 예시</h3>
+                    <div id="shortPostits" class="postit-container">
+                      <!-- 포스트잇 -->
+                    </div>
+                    <div id="shortGaugeWrapper" class="short-gauge-wrapper">
+                      <div id="shortGaugeBar" class="short-gauge-bar">
+                        <div id="gauge-correct" class="gauge-fill correct"></div>
+                        <div id="gauge-wrong" class="gauge-fill wrong"></div>
+                      </div>
+                        <div id="shortGaugeRate" class="short-gauge-rate">
+                          정답률: 0%
+                        </div>
+                    </div>
+                  </div>
+
                 </div>
               </div>
             </div>
